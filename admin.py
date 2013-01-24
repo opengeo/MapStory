@@ -43,6 +43,14 @@ class VideoLinkAdmin(admin.ModelAdmin):
 class ContactDetailAdmin(admin.ModelAdmin):
     pass
 
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('email', 'first_name', 'last_name', 'date_joined')
+    list_filter = ('is_staff', 'is_superuser')
+
+
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
 admin.site.register(VideoLink, VideoLinkAdmin)
 admin.site.register(Section, SectionAdmin)
 admin.site.register(ContactDetail, ContactDetailAdmin)
