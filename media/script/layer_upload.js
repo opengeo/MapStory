@@ -154,6 +154,10 @@ function init(options) {
             for (var i = 0; i < o.result.errors.length; i++) {
                 html += '<li>' + o.result.errors[i] + '</li>'
             }
+        } else {
+            for (var i = 0; i < o.result.errors.length; i++) {
+                html += '<li>' + o.result.errors[i] + '</li>';
+            }
         }
 
         msgs.query('ul')[0].innerHTML = html;
