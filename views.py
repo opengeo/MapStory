@@ -28,6 +28,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template import loader
@@ -245,6 +246,8 @@ def layer_metadata(request, layername):
             errors = _error_response('There were errors in the data provided:',
                                      form.errors.as_ul(), 'alert-error')
             return HttpResponse(errors, status=400)
+    # old 'geonode' api, just redirect to layer page
+    return HttpResponseRedirect(reverse('data_detail', args=[layer.typename]))
     
 @login_required
 def favorite(req, layer_or_map, id):
@@ -463,6 +466,8 @@ def upload_style(req):
         return respond(errors="The uploaded SLD file is not valid XML")
     
     el = dom.findall("{http://www.opengis.net/sld}NamedLayer/{http://www.opengis.net/sld}Name")
+    if len(el) == 0 and not data.get('name'):
+        return respond(errors="Please provide a name, unable to extract one from the SLD.")
     name = data.get('name') or el[0].text
     if data['update']:
         match = None
