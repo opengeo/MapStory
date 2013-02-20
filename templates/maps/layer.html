@@ -3,7 +3,7 @@
 {% load geonode_auth %}
 {% load mapstory_tags %}
 {% load dialogos_tags %}
-{% load flag_tags %}
+{% load flagtags %}
 {% load agon_ratings_tags %}
 {% load staticfiles %}
 
@@ -205,7 +205,7 @@
                             <div class="fb-like" data-href="http://{{ request.get_host }}{{ request.get_full_path }}" data-send="false" data-width="50" data-layout="button_count" data-show-faces="false"></div>
                         </div>
                         <div class="tab-pane" id="actions4">
-                            TODO: Say Something here about what flagging is all about
+                            {% comment %} TODO: Say Something here about what flagging is all about {% endcomment %}
                             {% flag layer "owner" %}
                         </div>
                         <div class="tab-pane" id="actions5">
