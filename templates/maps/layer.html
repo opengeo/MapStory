@@ -18,7 +18,9 @@
 <script type="text/javascript" src="{% static "script/comments.js" %}"></script>
 <script type="text/javascript" src="{% static "script/favorites.js" %}"></script>
 <script type="text/javascript" src="{% static "script/info.js" %}"></script>
-    <script type="text/javascript">
+<script type="text/javascript" src="{% static "script/hashUrl.js" %}"></script>
+
+<script type="text/javascript">
 {% autoescape off %}
         var styleEditor, modified = false;
         Ext.onReady(function() {
@@ -56,8 +58,12 @@
             if (config.map.zoom === null) {
                 config.map.zoom = 1;
             }
+
             app = new mapstory.LayerViewer(config);
-            
+            app.on('portalready', function () {
+                doHashUrl(app);
+            });
+
             //Are these next 2 element click handlers relevant anymore?
             Ext.get(Ext.DomQuery.select(".styles-list input[@name='style']")).on("click", function(evt, elem) {
                 app.selectedLayer.getLayer().mergeNewParams({
