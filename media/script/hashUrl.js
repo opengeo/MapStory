@@ -20,17 +20,30 @@
 
     doHashUrl = function (app) {
 
-        var location = window.location,
-            hash     = location.hash;
+        var parseUrl = function () {
+            var location = window.location,
+                hash     = location.hash;
 
-        // make sure we have a hash URL
-        if (hash) {
             if (hash === '#full') {
-                // set the window to fullscreen
                 setMaxSize(app);
             }
+        };
+
+        // wait until the portal has everything it needs to run
+        app.on('portalready', function () {
+            parseUrl();
+        });
+
+        // make sure we have the onhashchange event
+        if (typeof window.onhashchange !== 'undefined') {
+            window.onhashchange = function (event) {
+                parseUrl();
+            };
+
         }
+
     };
+
 
     // export the function to the global scope
     window.doHashUrl = doHashUrl;

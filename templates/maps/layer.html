@@ -60,9 +60,7 @@
             }
 
             app = new mapstory.LayerViewer(config);
-            app.on('portalready', function () {
-                doHashUrl(app);
-            });
+            doHashUrl(app);
 
             //Are these next 2 element click handlers relevant anymore?
             Ext.get(Ext.DomQuery.select(".styles-list input[@name='style']")).on("click", function(evt, elem) {
