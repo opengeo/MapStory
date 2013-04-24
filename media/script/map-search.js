@@ -31,13 +31,55 @@
     ],
         LayerElement = Backbone.View.extend({
             tagName: 'li',
-            className: 'layer-element',
             template: _.template($('#layer-element').html()),
             events: {
                 'click a': 'addToMap'
             },
+
+            checkLayerSource: function () {
+                var ge = this.options.geoExplorer,
+                    layer = this.options.layer,
+                    sourceId = 'geonode:' + layer.title + '-search',
+                    // get the layer source from Geo explorer
+                    source = ge.layerSources[sourceId];
+
+                if (!source) {
+                    source = ge.addLayerSource({
+                        id: sourceId,
+                        config: {
+                            isLazy: function () { return false ;},
+                            ptype: 'gxp_wmscsource',
+                            hidden: true,
+                            restUrl: "/gs/rest", // TODO hard coded
+                            version: "1.1.1",
+                            url: layer.owsUrl
+                        }
+                    });
+                }
+
+                source.store.load();
+                return source;
+
+            },
             addToMap: function () {
-                console.log('hello world');
+                var source = this.checkLayerSource(),
+                    ge = this.options.geoExplorer,
+                    layerStore = ge.mapPanel.layers,
+                    layer = this.options.layer,
+                    record;
+
+                source.on({
+                    ready: function () {
+                        record = source.createLayerRecord({
+                            name: layer.title,
+                            source: source.id
+                        });
+                        layerStore.add([record]);
+
+                    }
+                });
+
+
             },
             render: function () {
                 this.$el.html(this.template({
@@ -58,9 +100,11 @@
             },
 
             doSearch: function () {
-                var ul = this.$el.find('ul#layers'),
+                var ul = this.$el.find('ul#ms-search-layers'),
+                    self = this,
                     queryParameters = {
                         btype: 'layer',
+                        limit: 50,
                         sort: this.$el.find('#sortBy').val()
                     },
                     q  = this.$el.find('#query').val();
@@ -77,9 +121,12 @@
                 }).done(function (data) {
                     _.each(data.rows, function (layer) {
                         var eln = new LayerElement({
-                            layer: layer
+                            layer: layer,
+                            geoExplorer: self.options.geoExplorer
                         }).render();
+                        eln.$el.hide();
                         ul.append(eln.$el);
+                        eln.$el.fadeIn(1000);
                     });
                 });
             },
@@ -96,13 +143,12 @@
 
     window.main = function (options) {
 
-        $('.container a').click(function () {
+        $('#add-layers').click(function () {
             var layerSearch = new LayerSearch({
-                searchUrl: options.searchUrl
+                searchUrl: options.searchUrl,
+                geoExplorer: options.geoExplorer
             }).render();
         });
     };
 
 }(jQuery));
-
-
