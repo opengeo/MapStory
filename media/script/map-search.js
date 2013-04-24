@@ -12,7 +12,7 @@
         this.template = _.template($('#layer-element').html());
     };
 
-    LayerResult.prototype.checkLayerSource = function () {
+    LayerResult.prototype.checkLayerSource = function (callback) {
         var ge = this.geoExplorer,
             layer = this.layer,
             sourceId = 'geonode:' + layer.title + '-search',
@@ -31,29 +31,30 @@
                     url: layer.owsUrl
                 }
             });
+            source.on({
+                ready: function () {
+                    callback(source);
+                }
+            });
+        } else {
+            callback(source);
         }
 
-        source.store.load();
-        return source;
     };
 
     LayerResult.prototype.addToMap = function () {
 
-        var source = this.checkLayerSource(),
-            ge = this.geoExplorer,
+        var ge = this.geoExplorer,
             layerStore = ge.mapPanel.layers,
-            layer = this.layer,
-            record;
+            layer = this.layer;
 
-        source.on({
-            ready: function () {
-                record = source.createLayerRecord({
-                    name: layer.title,
-                    source: source.id
-                });
-                layerStore.add([record]);
+        this.checkLayerSource(function (source) {
+            var record = source.createLayerRecord({
+                name: layer.title,
+                source: source.id
+            });
+            layerStore.add([record]);
 
-            }
         });
     };
 

@@ -96,7 +96,9 @@
       var app = {
          mapPanel: {
             layers: {
-               add: function () {}
+               add: function () {
+                 console.log('you tried to add a layer');
+               }
             }
          },
          addLayerSource: function (config) {
