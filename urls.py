@@ -58,6 +58,14 @@ urlpatterns = patterns('',
     ('^profiles/create', 'profiles.views.create_profile', {'form_class': ProfileForm,}),
 )
 
+urlpatterns += patterns(
+    'django.views.generic.simple',
+
+    url(r'^new-search/',
+        'direct_to_template',
+        {'template': 'new-search.html'} ),
+)
+
 urlpatterns += patterns('mapstory.views',
     (r'^(?:index/?)?$', 'index'),
 

@@ -1,0 +1,84 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <link 
+       href="{% static "components/bootstrap/css/bootstrap.min.css"%}" 
+       rel="stylesheet" media="screen">
+
+  </head>
+
+<body>
+
+  <div class="container">
+    <a class="btn" href="#">Add Layers</a>
+  </div>
+
+  <script src="{% static "components/jquery/jquery.min.js" %}"></script>
+  <script src="{% static "components/underscore/underscore-min.js" %}"></script>
+  <script src="{% static "components/backbone/backbone-min.js"%}"></script>
+  <script src="{% static "components/bootstrap/js/bootstrap.min.js" %}"></script>
+  <script src="{% static "components/bootstrap/js/bootstrap.js" %}"></script>
+
+  <script id="layer-element" type="text/template">
+
+    <div>
+      <a href="#"><%= layer.title %></a>
+    </div>
+
+    <div class="more-info">
+      <small><%= layer.abstract %></small>
+    </div>
+
+  </script>
+
+  <script id="add-layer-template" type="text/template">
+    <div class="modal-header">
+        <h3>Manage Layers</h3>
+
+
+      <form class="form-search">
+
+        <div class="input-prepend">
+          <button id="search" type="submit" class="btn">Search</button>
+          <input id="query" type="text" class="span2 search-query">
+        </div>
+
+        <select id="sortBy">
+          <% _.each(sortOptions, function (opt) { %>
+          <option value="<%= opt.value %>"><%= opt.title %></option>
+          <% }) %>
+        </select>
+
+      </form>
+
+    </div>
+
+    <div class="modal-body">
+
+      <ul id="layers">
+      </ul>
+
+    </div>
+
+    <div class="modal-footer">
+      <button id="done" class="btn">Done</button>
+    </div>
+
+  </script>
+
+
+
+  <script src="{% static "script/map-search.js"%}"></script>
+  <script type="text/javascript">
+    main({
+       searchUrl: "{% url new_search_api %}"
+    });
+  </script>
+
+
+</body>
