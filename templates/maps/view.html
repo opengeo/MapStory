@@ -65,9 +65,12 @@
         <li>
 
           <select id="sortBy">
-            <% _.each(sortOptions, function (opt) { %>
-            <option value="<%= opt.value %>"><%= opt.title %></option>
-            <% }) %>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="alphaaz">Alphabetical (A-Z)</option>
+            <option value="alphaza">Alphabetical (Z-A)</option>
+            <option value="popularity">Popularity</option>
+            <option value="rel">Relevance</option>
           </select>
           <button class="btn">Limit by bounding box</button>
         </li>
