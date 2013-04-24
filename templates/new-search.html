@@ -1,21 +1,43 @@
 {% load staticfiles %}
+{% load mapstory_tags %}
 <!DOCTYPE html>
 <html>
   <head>
     <title></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,
+                                   initial-scale=1.0">
+
+    <link rel="stylesheet" type="text/css" href="{% static "theme/geonode.css" %}" />
+
+    <link rel="stylesheet" type="text/css" href="{% static "theme/ext-theme.css" %}" />
+
+
+    <link rel="stylesheet" 
+          type="text/css"
+          href="xternals/ext/resources/css/ext-all.css" />
+
+    <link rel="stylesheet"
+          type="text/css"
+          href="{% geonode_static "externals/ext/resources/css/xtheme-access.css" %}"/>
+
+    <script 
+       type="text/javascript" 
+       src="{% geonode_static "externals/ext/adapter/ext/ext-base.js" %}">
+    </script>
+
+    <script 
+       type="text/javascript" 
+       src="{% geonode_static "externals/ext/ext-all.js" %}">
+    </script>
+
 
     <link
        rel="stylesheet"
        href="{% static "theme/site.css" %}">
 
-    <link 
-       href="{% static "components/bootstrap/css/bootstrap.min.css"%}" 
-       rel="stylesheet" media="screen">
-
   </head>
 
-<body>
+<body style="background: #454238;">
 
   <div class="container">
     <a class="btn" id="add-layers" href="#">Add Layers</a>
@@ -41,44 +63,29 @@
   </script>
 
   <script id="add-layer-template" type="text/template">
-    <div class="modal-header">
-        <h3>Manage Layers</h3>
-
-
-      <form class="form-search">
-        <ul>
-        <li>
-          <button id="search" type="submit" class="btn">Search</button>
-          <input id="query" type="text" class="search-query">
-        </li>
-
-        <li>
-
-          <select id="sortBy">
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="alphaaz">Alphabetical (A-Z)</option>
-            <option value="alphaza">Alphabetical (Z-A)</option>
-            <option value="popularity">Popularity</option>
-            <option value="rel">Relevance</option>
-          </select>
-
-          <button class="btn">Limit by bounding box</button>
-        </li>
-        </ul>
+    <div id="ms-header">
+      <form>
+        <button id="search" type="submit" class="btn">Search</button>
+        <input id="query" type="text" class="search-query">
+        <select id="sortBy">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="alphaaz">Alphabetical (A-Z)</option>
+          <option value="alphaza">Alphabetical (Z-A)</option>
+          <option value="popularity">Popularity</option>
+          <option value="rel">Relevance</option>
+        </select>
       </form>
-
-
     </div>
 
-    <div class="modal-body">
 
-      <ul id="ms-search-layers">
+    <div id="ms-search-layers">
+      <ul>
       </ul>
-
     </div>
 
-    <div class="modal-footer">
+
+    <div id="ms-footer">
       <button id="done" class="btn">Done</button>
     </div>
 

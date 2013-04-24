@@ -17,10 +17,6 @@
 </style>
 
 
-    <link
-       href="{% static "components/bootstrap/css/bootstrap.min.css"%}"
-       rel="stylesheet" media="screen">
-
 
 <script src="{% geonode_static "script/PrintPreview.js" %}"></script>
 <link rel="stylesheet" type="text/css" href="{% geonode_static "externals/PrintPreview/resources/css/printpreview.css" %}" />
@@ -51,43 +47,30 @@
   </script>
 
   <script id="add-layer-template" type="text/template">
-    <div class="modal-header">
-        <h3>Manage Layers</h3>
 
-
-      <form class="form-search">
-        <ul>
-        <li>
-          <button id="search" type="submit" class="btn">Search</button>
-          <input id="query" type="text" class="search-query">
-        </li>
-
-        <li>
-
-          <select id="sortBy">
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="alphaaz">Alphabetical (A-Z)</option>
-            <option value="alphaza">Alphabetical (Z-A)</option>
-            <option value="popularity">Popularity</option>
-            <option value="rel">Relevance</option>
-          </select>
-          <button class="btn">Limit by bounding box</button>
-        </li>
-        </ul>
+    <div id="ms-header">
+      <form>
+        <button id="search" type="submit" class="btn">Search</button>
+        <input id="query" type="text" class="search-query">
+        <select id="sortBy">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="alphaaz">Alphabetical (A-Z)</option>
+          <option value="alphaza">Alphabetical (Z-A)</option>
+          <option value="popularity">Popularity</option>
+          <option value="rel">Relevance</option>
+        </select>
       </form>
-
-
     </div>
 
-    <div class="modal-body">
 
-      <ul id="ms-search-layers">
+    <div id="ms-search-layers">
+      <ul>
       </ul>
-
     </div>
 
-    <div class="modal-footer">
+
+    <div id="ms-footer">
       <button id="done" class="btn">Done</button>
     </div>
 
