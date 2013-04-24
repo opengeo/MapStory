@@ -1,5 +1,5 @@
 /*jslint browser: true, nomen: true, indent: 4, maxlen: 80 */
-/*global window, jQuery, _  */
+/*global window, jQuery, _, Ext  */
 
 (function ($) {
     'use strict';
@@ -66,19 +66,24 @@
         return this;
     };
 
+    // main view object controls rendering widget template and
+    // controls the events that are attached to this widget
     LayerSearch = function (options) {
         this.searchUrl = options.searchUrl;
         this.geoExplorer = options.geoExplorer;
 
-        this.$el = $('<div/>', {'class': 'modal'});
+        this.$el = $('<div/>', {
+            id: 'ms-search-widget'
+        });
+
         this.template = _.template($('#add-layer-template').html());
 
     };
     LayerSearch.prototype.doSearch = function () {
-        var ul = this.$el.find('ul#ms-search-layers'),
+        var ul = this.$el.find('div#ms-search-layers ul'),
             self = this,
             queryParameters = {
-                btype: 'layer',
+                bytype: 'layer',
                 limit: 50,
                 sort: this.$el.find('#sortBy').val()
             },
@@ -108,8 +113,9 @@
     };
     LayerSearch.prototype.render = function () {
         var doSearch = _.bind(this.doSearch, this);
+
         this.$el.append(this.template());
-        $('body').append(this.$el);
+
         // populate the widget when its rendered
         this.doSearch();
 
@@ -123,7 +129,7 @@
         this.$el.find('#search').click(doSearch);
         this.$el.find('#query').blur(doSearch);
         this.$el.find('#sortBy').change(doSearch);
-
+        $('body').append(this.$el);
         return this;
     };
 
