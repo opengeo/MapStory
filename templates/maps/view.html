@@ -16,18 +16,102 @@
     .gxp-addlayers-sourceselect { display: none; }
 </style>
 
+
+    <link
+       href="{% static "components/bootstrap/css/bootstrap.min.css"%}"
+       rel="stylesheet" media="screen">
+
+
 <script src="{% geonode_static "script/PrintPreview.js" %}"></script>
 <link rel="stylesheet" type="text/css" href="{% geonode_static "externals/PrintPreview/resources/css/printpreview.css" %}" />
 <script src="{{GEOSERVER_BASE_URL}}pdf/info.json?var=printCapabilities" type="text/javascript"></script>
 {{ block.super }}
+
+
+
+  <script src="{% static "components/jquery/jquery.min.js" %}"></script>
+  <script src="{% static "components/underscore/underscore-min.js" %}"></script>
+  <script src="{% static "components/backbone/backbone-min.js"%}"></script>
+  <script src="{% static "components/bootstrap/js/bootstrap.min.js" %}"></script>
+  <script src="{% static "components/bootstrap/js/bootstrap.js" %}"></script>
+
+  <script id="layer-element" type="text/template">
+
+    <div>
+      <p><a href="#"><%= layer.title %></a>
+        by <a href="<%= layer.owner_detail %>"><%= layer.owner %></a> on
+        <%= layer.last_modified %></p>
+    </div>
+    <img src="<%= layer.thumb %>">
+    <p><%= layer.views %> Views | <%= layer.rating %> Rating</p>
+    <div class="more-info">
+      <small><%= layer.abstract %></small>
+    </div>
+
+  </script>
+
+  <script id="add-layer-template" type="text/template">
+    <div class="modal-header">
+        <h3>Manage Layers</h3>
+
+
+      <form class="form-search">
+        <ul>
+        <li>
+          <button id="search" type="submit" class="btn">Search</button>
+          <input id="query" type="text" class="search-query">
+        </li>
+
+        <li>
+
+          <select id="sortBy">
+            <% _.each(sortOptions, function (opt) { %>
+            <option value="<%= opt.value %>"><%= opt.title %></option>
+            <% }) %>
+          </select>
+          <button class="btn">Limit by bounding box</button>
+        </li>
+        </ul>
+      </form>
+
+
+    </div>
+
+    <div class="modal-body">
+
+      <ul id="ms-search-layers">
+      </ul>
+
+    </div>
+
+    <div class="modal-footer">
+      <button id="done" class="btn">Done</button>
+    </div>
+
+  </script>
+
+
+
+  <script src="{% static "script/map-search.js"%}"></script>
+
 
 <script type="text/javascript">
 {% autoescape off %}
 
 var app = new GeoExplorer();
 
+$(function () {
+
+   main({
+      geoExplorer: app,
+      searchUrl: "{% url new_search_api %}"
+   });
+
+});
+
 // template markup specific javascript
 (function() {
+
     var titleTemplate, moreInfoTemplate, permalinkTemplate;
     function permalink(id) {
         return permalinkTemplate.apply({
@@ -82,6 +166,7 @@ gxp.form.FontComboBox.prototype.defaultFont = 'Arial';
   <div id="topPanel">
     <div id="more-info">&nbsp;</div>
     <span id="map-title-header"></span>
+    <a id="add-layers" href="#">Add layers</a>
   </div>
 </div>
 <div id="templates">

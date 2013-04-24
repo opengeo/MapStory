@@ -2164,3 +2164,17 @@ h2.icn-storylayer span, h2.icn-mapstory span {
     width: 80%;
     resize: both;
 }
+
+ul#ms-search-layers {
+    list-style: none;
+}
+
+#form-search select input button {
+    padding: 5px;
+}
+#ms-search-layers li {
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid #eee;
+/*    background: #eee; */
+}

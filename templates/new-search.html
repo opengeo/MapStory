@@ -5,6 +5,9 @@
     <title></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link
+       rel="stylesheet"
+       href="{% static "theme/site.css" %}">
 
     <link 
        href="{% static "components/bootstrap/css/bootstrap.min.css"%}" 
@@ -15,7 +18,7 @@
 <body>
 
   <div class="container">
-    <a class="btn" href="#">Add Layers</a>
+    <a class="btn" id="add-layers" href="#">Add Layers</a>
   </div>
 
   <script src="{% static "components/jquery/jquery.min.js" %}"></script>
@@ -27,9 +30,12 @@
   <script id="layer-element" type="text/template">
 
     <div>
-      <a href="#"><%= layer.title %></a>
+      <p><a href="#"><%= layer.title %></a>
+        by <a href="<%= layer.owner_detail %>"><%= layer.owner %></a> on
+        <%= layer.last_modified %></p>
     </div>
-
+    <img src="<%= layer.thumb %>">
+    <p><%= layer.views %> Views | <%= layer.rating %> Rating</p>
     <div class="more-info">
       <small><%= layer.abstract %></small>
     </div>
@@ -42,25 +48,30 @@
 
 
       <form class="form-search">
-
-        <div class="input-prepend">
+        <ul>
+        <li>
           <button id="search" type="submit" class="btn">Search</button>
-          <input id="query" type="text" class="span2 search-query">
-        </div>
+          <input id="query" type="text" class="search-query">
+        </li>
 
-        <select id="sortBy">
-          <% _.each(sortOptions, function (opt) { %>
-          <option value="<%= opt.value %>"><%= opt.title %></option>
-          <% }) %>
-        </select>
+        <li>
 
+          <select id="sortBy">
+            <% _.each(sortOptions, function (opt) { %>
+            <option value="<%= opt.value %>"><%= opt.title %></option>
+            <% }) %>
+          </select>
+          <button class="btn">Limit by bounding box</button>
+        </li>
+        </ul>
       </form>
+
 
     </div>
 
     <div class="modal-body">
 
-      <ul id="layers">
+      <ul id="ms-search-layers">
       </ul>
 
     </div>
@@ -75,8 +86,35 @@
 
   <script src="{% static "script/map-search.js"%}"></script>
   <script type="text/javascript">
-    main({
-       searchUrl: "{% url new_search_api %}"
+
+    $(function () {
+
+      // mock the geo explorer application to make it easier to test
+      // and debug
+      var app = {
+         mapPanel: {
+            layers: {
+               add: function () {}
+            }
+         },
+         addLayerSource: function (config) {
+            return {
+              store: {
+                 load: function () {}
+              },
+              on: function (config) {},
+              createLayerRecord: function (config) {}
+            };
+         },
+         layerSources: {
+         }
+      };
+
+       main({
+          geoExplorer: app,
+          searchUrl: "{% url new_search_api %}"
+       });
+
     });
   </script>
 
