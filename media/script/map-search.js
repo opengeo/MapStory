@@ -58,11 +58,21 @@
         });
     };
 
-    LayerResult.prototype.render = function () {
+    LayerResult.prototype.toggleInfo = function (event) {
+        this.$el.find('div.ms-layer-info').toggle();
+    };
+
+    LayerResult.prototype.render = function (showMeta) {
         this.$el.html(this.template({
             layer: this.layer
         }));
-        this.$el.find('a').click(_.bind(this.addToMap, this));
+
+        if (!showMeta) {
+            this.$el.find('div.ms-layer-info').hide();
+        }
+
+        this.$el.find('a.ms-add-to-map').click(_.bind(this.addToMap, this));
+        this.$el.find('.show-meta').click(_.bind(this.toggleInfo, this));
         return this;
     };
 
@@ -76,14 +86,31 @@
             id: 'ms-search-widget'
         });
 
-        this.$el.css('left', $(window).width() / 2 - 300);
+        $(window).resize(_.bind(this.setLeft, this));
+
+        this.setLeft();
 
         this.template = _.template($('#add-layer-template').html());
 
     };
+
+    LayerSearch.prototype.setLeft = function () {
+        var widgetWidth = 600;
+        this.$el.css('left', $(window).width() / 2 - widgetWidth / 2);
+    };
+
+    LayerSearch.prototype.renderLayer = function (layer, showMeta) {
+        var element = new LayerResult({
+                layer: layer,
+                geoExplorer: this.geoExplorer
+            }).render(showMeta);
+
+        this.$layerList.append(element.$el);
+    };
+
     LayerSearch.prototype.doSearch = function () {
-        var ul = this.$el.find('div#ms-search-layers ul'),
-            self = this,
+        var self = this,
+            showMeta = this.$el.find('#show-meta-info:checkbox').is(':checked'),
             queryParameters = {
                 bytype: 'layer',
                 limit: 50,
@@ -95,20 +122,14 @@
             queryParameters.q = q;
         }
 
-        ul.empty();
+        this.$layerList.empty();
 
         $.ajax({
             url: this.searchUrl,
             data: queryParameters
         }).done(function (data) {
             _.each(data.rows, function (layer) {
-                var eln = new LayerResult({
-                    layer: layer,
-                    geoExplorer: self.geoExplorer
-                }).render();
-                eln.$el.hide();
-                ul.append(eln.$el);
-                eln.$el.fadeIn(1000);
+                self.renderLayer(layer, showMeta);
             });
         });
 
@@ -117,6 +138,7 @@
         var doSearch = _.bind(this.doSearch, this);
 
         this.$el.append(this.template());
+        this.$layerList = this.$el.find('#ms-search-layers ul');
 
         // populate the widget when its rendered
         this.doSearch();
@@ -132,6 +154,7 @@
         this.$el.find('#query').blur(doSearch);
         this.$el.find('#sortBy').change(doSearch);
         this.$el.find('#bbox-limit').change(doSearch);
+        this.$el.find('#show-meta-info').change(doSearch);
 
         $('body').append(this.$el);
         return this;

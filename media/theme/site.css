@@ -2199,9 +2199,13 @@ h2.icn-storylayer span, h2.icn-mapstory span {
 }
 
 #ms-search-layers li {
-    margin: 5px;
     border-radius: 5px;
-    padding: 5px;
+}
+#ms-search-layers div.ms-layer-title {
+    padding: 1px;
+}
+#ms-search-layers .ms-layer-info {
+    padding: 10px;
 }
 #ms-search-layers li:hover {
     background: #000;
