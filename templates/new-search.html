@@ -43,25 +43,23 @@
   <script src="{% static "components/underscore/underscore-min.js" %}"></script>
   <script src="{% static "components/bootstrap/js/bootstrap.min.js" %}"></script>
 
-  <script type="text/javascript" src="{% static "script/expander.js" %}"></script>
+  <script type="text/javascript" src="{% static "script/jquery.expander.min.js" %}"></script>
 
   <script id="layer-element" type="text/template">
 
     <div class="ms-layer-title">
       <p>
-
         <a class="show-meta" href="#"><%= layer.title %></a> by
         <a href="<%= layer.owner_detail %>"><%= layer.owner %></a> on
         <%= layer.last_modified %>
         <a class="ms-add-to-map" href="#">Add to map</a>
-
       </p>
     </div>
 
     <div class="ms-layer-info">
       <img src="<%= layer.thumb %>">
       <p class="ms-layer-rating"><%= layer.views %> Views | <%= layer.rating %> Rating</p>
-      <p class="ms-layer-abstract"><%= layer.abstract %></p>
+      <div class="ms-layer-abstract"><%= layer.abstract %></div>
     </div>
 
   </script>

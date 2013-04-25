@@ -71,6 +71,10 @@
             this.$el.find('div.ms-layer-info').hide();
         }
 
+        this.$el.find('.ms-layer-abstract').expander({
+            slicePoint: 200
+        });
+
         this.$el.find('a.ms-add-to-map').click(_.bind(this.addToMap, this));
         this.$el.find('.show-meta').click(_.bind(this.toggleInfo, this));
         return this;
