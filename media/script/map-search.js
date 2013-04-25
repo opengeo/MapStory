@@ -71,6 +71,7 @@
             this.$el.find('div.ms-layer-info').hide();
         }
 
+
         this.$el.find('.ms-layer-abstract').expander({
             slicePoint: 200
         });
