@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="{% static "theme/ext-theme.css" %}" />
 
 
-    <link rel="stylesheet" 
+    <link rel="stylesheet"
           type="text/css"
           href="xternals/ext/resources/css/ext-all.css" />
 
@@ -39,10 +39,6 @@
 
 <body style="background: #454238;">
 
-  <div class="container">
-    <a class="btn" id="add-layers" href="#">Add Layers</a>
-  </div>
-
   <script src="{% static "components/jquery/jquery.min.js" %}"></script>
   <script src="{% static "components/underscore/underscore-min.js" %}"></script>
   <script src="{% static "components/bootstrap/js/bootstrap.min.js" %}"></script>
@@ -65,16 +61,24 @@
   <script id="add-layer-template" type="text/template">
     <div id="ms-header">
       <form>
-        <button id="search" type="submit" class="btn">Search</button>
-        <input id="query" type="text" class="search-query">
-        <select id="sortBy">
-          <option value="newest">Newest</option>
-          <option value="oldest">Oldest</option>
-          <option value="alphaaz">Alphabetical (A-Z)</option>
-          <option value="alphaza">Alphabetical (Z-A)</option>
-          <option value="popularity">Popularity</option>
-          <option value="rel">Relevance</option>
-        </select>
+        <fieldset>
+          <button id="search" type="submit" class="btn">Search</button>
+          <input id="query" type="text" class="search-query">
+          <select id="sortBy">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="alphaaz">Alphabetical (A-Z)</option>
+            <option value="alphaza">Alphabetical (Z-A)</option>
+            <option value="popularity">Popularity</option>
+            <option value="rel">Relevance</option>
+          </select>
+        </fieldset>
+
+        <fieldset>
+          <label>Limit layers current map area</label>
+          <input id="bbox-limit"type="checkbox">
+        </fieldset>
+
       </form>
     </div>
 
@@ -120,11 +124,10 @@
          layerSources: {
          }
       };
-
-       main({
-          geoExplorer: app,
-          searchUrl: "{% url new_search_api %}"
-       });
+    var widget = new LayerSearch({
+        geoExplorer: app,
+        searchUrl: "{% url new_search_api %}"
+    }).render();
 
     });
   </script>

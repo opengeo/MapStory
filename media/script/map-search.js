@@ -76,6 +76,8 @@
             id: 'ms-search-widget'
         });
 
+        this.$el.css('left', $(window).width() / 2 - 300);
+
         this.template = _.template($('#add-layer-template').html());
 
     };
@@ -129,9 +131,13 @@
         this.$el.find('#search').click(doSearch);
         this.$el.find('#query').blur(doSearch);
         this.$el.find('#sortBy').change(doSearch);
+        this.$el.find('#bbox-limit').change(doSearch);
+
         $('body').append(this.$el);
         return this;
     };
+
+    window.LayerSearch = LayerSearch;
 
     window.main = function (options) {
 
