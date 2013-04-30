@@ -41,8 +41,6 @@
           '</select>',
         '</fieldset>',
         '<fieldset>',
-          '<label>Limit layers current map area</label>',
-          '<input id="bbox-limit" type="checkbox">',
           '<label>Show meta info expanded</label>',
           '<input id="show-meta-info" type="checkbox" checked>',
         '<button id="prev">Prev</button>',
@@ -148,7 +146,7 @@
         this.searchUrl = options.searchUrl;
         this.geoExplorer = options.geoExplorer;
 
-        this.pageSize = 2;
+        this.pageSize = 5;
         this.currentPage = 1;
         this.numberOfRecords = 0;
 
