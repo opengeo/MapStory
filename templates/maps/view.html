@@ -30,15 +30,6 @@
 
 var app = new GeoExplorer();
 
-$(function () {
-
-   main({
-      geoExplorer: app,
-      searchUrl: "{% url new_search_api %}"
-   });
-
-});
-
 // template markup specific javascript
 (function() {
 
@@ -96,7 +87,6 @@ gxp.form.FontComboBox.prototype.defaultFont = 'Arial';
   <div id="topPanel">
     <div id="more-info">&nbsp;</div>
     <span id="map-title-header"></span>
-    <a id="add-layers" href="#">Add layers</a>
   </div>
 </div>
 <div id="templates">

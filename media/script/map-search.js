@@ -124,6 +124,7 @@
 
 
         this.$el.find('.ms-layer-abstract').expander({
+            collapseTimer: 0,
             slicePoint: 200
         });
 
@@ -302,15 +303,5 @@
     };
 
     window.LayerSearch = LayerSearch;
-
-    window.main = function (options) {
-
-        $('#add-layers').click(function () {
-            var layerSearch = new LayerSearch({
-                searchUrl: options.searchUrl,
-                geoExplorer: options.geoExplorer
-            }).render();
-        });
-    };
 
 }(jQuery));
