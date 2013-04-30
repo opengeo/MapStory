@@ -2185,6 +2185,10 @@ h2.icn-storylayer span, h2.icn-mapstory span {
 #ms-search-widget fieldset {
     border: none;
 }
+#ms-search-widget button, input, select {
+    margin: 5px;
+}
+
 #ms-search-widget #ms-header {
     padding: 10px;
     border-bottom: 2px solid #008CB3;
