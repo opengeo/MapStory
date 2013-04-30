@@ -17,80 +17,12 @@
 </style>
 
 
-
-<script src="{% geonode_static "script/PrintPreview.js" %}"></script>
-<link rel="stylesheet" type="text/css" href="{% geonode_static "externals/PrintPreview/resources/css/printpreview.css" %}" />
-<script src="{{GEOSERVER_BASE_URL}}pdf/info.json?var=printCapabilities" type="text/javascript"></script>
 {{ block.super }}
 
 
-
-  <script src="{% static "components/jquery/jquery.min.js" %}"></script>
-  <script src="{% static "components/underscore/underscore-min.js" %}"></script>
-  <script type="text/javascript" src="{% static "script/jquery.expander.min.js" %}"></script>
-
-  <script id="layer-element" type="text/template">
-
-    <div class="ms-layer-title">
-      <p>
-
-        <a class="show-meta" href="#"><%= layer.title %></a> by
-        <a href="<%= layer.owner_detail %>"><%= layer.owner %></a> on
-        <%= layer.last_modified %>
-        <a class="ms-add-to-map" href="#">Add to map</a>
-
-      </p>
-    </div>
-
-    <div class="ms-layer-info">
-      <img src="<%= layer.thumb %>">
-      <p class="ms-layer-rating"><%= layer.views %> Views | <%= layer.rating %> Rating</p>
-      <div class="ms-layer-abstract"><%= layer.abstract %></div>
-    </div>
-
-  </script>
-
-  <script id="add-layer-template" type="text/template">
-    <div id="ms-header">
-      <form>
-        <fieldset>
-          <button id="search" type="submit" class="btn">Search</button>
-          <input id="query" type="text" class="search-query">
-          <select id="sortBy">
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="alphaaz">Alphabetical (A-Z)</option>
-            <option value="alphaza">Alphabetical (Z-A)</option>
-            <option value="popularity">Popularity</option>
-            <option value="rel">Relevance</option>
-          </select>
-        </fieldset>
-
-        <fieldset>
-
-          <label>Limit layers current map area</label>
-          <input id="bbox-limit" type="checkbox">
-
-          <label>Show meta info expanded</label>
-          <input id="show-meta-info" type="checkbox" checked>
-
-        </fieldset>
-
-      </form>
-    </div>
-
-    <div id="ms-search-layers">
-      <ul>
-      </ul>
-    </div>
-
-    <div id="ms-footer">
-      <button id="done" class="btn">Done</button>
-    </div>
-
-  </script>
-
-  <script src="{% static "script/map-search.js"%}"></script>
+<script src="{% static "script/jquery-1.7.1.min.js" %}"></script>
+<script type="text/javascript" src="{% static "script/jquery.expander.min.js" %}"></script>
+<script src="{% static "script/map-search.js"%}"></script>
 
 
 <script type="text/javascript">
