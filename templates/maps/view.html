@@ -10,6 +10,7 @@
 {% include "geonode/app_header.html" %}
 {% include "geonode/geo_header.html" %}
 <link rel="stylesheet" type="text/css" href="{% static "theme/access-theme-shim.css"%}" />
+<link rel="stylesheet" type="text/css" href="{% static "theme/map-search.css"%}"/>
 <link rel="stylesheet" type="text/css" href="{% geonode_static "theme/ux/colorpicker/color-picker.ux.css" %}" />
 <style type="text/css">
     #templates { display: none; }
@@ -29,6 +30,21 @@
 {% autoescape off %}
 
 var app = new GeoExplorer();
+
+// when the add layers widget on the page load
+$(function () {
+   // make sure we are on the maps new page
+   if (window.location.pathname.match('/maps/new')) {
+
+       var search = new window.LayerSearch({
+           geoExplorer: app,
+           searchUrl: '/search/api'
+       }).render();
+
+   }
+
+});
+
 
 // template markup specific javascript
 (function() {
