@@ -14,6 +14,7 @@ from mapstory.models import UserActivity
 from mapstory.models import ProfileIncomplete
 from mapstory.models import audit_layer_metadata
 from mapstory.models import Topic
+from mapstory.models import Link
 from mapstory.templatetags import mapstory_tags
 
 from agon_ratings.models import Rating
@@ -106,14 +107,14 @@ class SocialTest(TestCase):
         lyr.publish.save()
 
         comment_on(lyr, self.bobby, 'a comment')
-        expected = ("http://localhost:8000/mapstory/storyteller/bobby (bobby)"
+        expected = ("http://localhost:8000/mapstory/storyteller/bobby/ (bobby)"
         " commented on http://localhost:8000/data/layer1 (the StoryLayer 'example')"
         " [ 0 minutes ago ]")
         actual = mapstory_tags.activity_item(self.bobby.actor_actions.all()[0], plain_text=True)
         self.assertEqual(expected, actual)
 
         rate(lyr, self.bobby, 4)
-        expected = ("http://localhost:8000/mapstory/storyteller/bobby (bobby)"
+        expected = ("http://localhost:8000/mapstory/storyteller/bobby/ (bobby)"
         " gave http://localhost:8000/data/layer1 (the StoryLayer 'example')"
         " a rating of 4 [ 0 minutes ago ]")
         actual = mapstory_tags.activity_item(self.bobby.actor_actions.all()[0], plain_text=True)
@@ -213,6 +214,18 @@ class LayerAuditTest(TestCase):
         layer.has_thumbnail = lambda : True
         self.assertTrue(audit_layer_metadata(layer))
 
+class LinkTests(TestCase):
+    c = Client()
+
+    def test_twitter_link(self):
+        link_href = "http://twitter.com/codeforsandiego"
+        l = Link(name = "test", href=link_href, order=1)
+        self.assertTrue(l.get_twitter_link)
+
+    def test_facebook_link(self):
+        link_href = "https://www.facebook.com/hillstreetoside"
+        l = Link(name = "test", href=link_href, order=1)
+        self.assertTrue(l.get_facebook_link)
 
 class ContactDetailTests(TestCase):
 

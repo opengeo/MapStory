@@ -69,7 +69,10 @@ urlpatterns += patterns('mapstory.views',
     url(r"^account/signup/$", SignupView.as_view(), name="account_signup"),
     # and this from geonode
     url(r'^data/(?P<layername>[^/]*)/metadata$', 'layer_metadata', name="layer_metadata"),
-
+    # and to make url kinda sane
+    url(r'^profiles/edit/links$', 'user_links', name='user_links'),
+    url(r'^profiles/edit/ribbon$', 'user_links', {'link_type' : 'ribbon_links'}, name='user_ribbon_links'),
+    
     # redirect some common geonode stuff
     url(r'^data/$', NamedRedirect.as_view(name='search_layers'), name='data_home'),
     url(r'^maps/$', NamedRedirect.as_view(name='search_maps', not_post=True), name='maps_home'),
@@ -114,13 +117,16 @@ urlpatterns += patterns('mapstory.views',
     url(r'^mapstory/topics/(?P<layer_or_map>\w+)/(?P<layer_or_map_id>\d+)$','topics_api',name='topics_api'),
     url(r'^mapstory/comment/(?P<layer_or_map_id>\d+)/(?P<comment_id>\d+)$','delete_story_comment',name='delete_story_comment'),
     url(r'^mapstory/flag_comment$','flag_comment',name='flag_comment'),
-    url(r'^favorite/map/(?P<id>\d+)$','favorite',{'layer_or_map':'map'}, name='add_favorite_map'),
-    url(r'^favorite/layer/(?P<id>\d+)$','favorite',{'layer_or_map':'layer'}, name='add_favorite_layer'),
+    url(r'^favorite/map/(?P<id>\d+)$','favorite',{'subject':'map'}, name='add_favorite_map'),
+    url(r'^favorite/layer/(?P<id>\d+)$','favorite',{'subject':'layer'}, name='add_favorite_layer'),
+    url(r'^favorite/user/(?P<id>\d+)$','favorite',{'subject':'user'}, name='add_favorite_user'),
     url(r'^favorite/(?P<id>\d+)/delete$','delete_favorite',name='delete_favorite'),
     url(r'^mapstory/publish/(?P<layer_or_map>\w+)/(?P<layer_or_map_id>\d+)$','publish_status',name='publish_status'),
     url(r'^mapstory/add-to-map/(?P<id>\d+)/(?P<typename>[:\w]+)','add_to_map',name='add_to_map'),
     url(r'^search/favoriteslinks$','favoriteslinks',name='favoriteslinks'),
     url(r'^search/favoriteslist$','favoriteslist',name='favoriteslist'),
+    url(r'^mapstory/resource/(?P<resource>[-\w]+)/links', 'resource_links', name='resource_links'),
+    url(r'^mapstory/resource/(?P<resource>[-\w]+)/ribbon', 'resource_links', {'link_type' : 'ribbon_links'}, name='resource_ribbon_links'),
 
     url(r'^ajax/hitcount/$', update_hit_count_ajax, name='hitcount_update_ajax'),
 
@@ -142,7 +148,12 @@ urlpatterns += patterns('mapstory.views',
         "extra_context" : {'html':'mapstory/thoughts/jg.html'}}, name="thoughts-jg"),
     url(r"^mapstory/thoughts/jen-ziemke/$", direct_to_template, {"template": "mapstory/thoughts.html",
         "extra_context" : {'html':'mapstory/thoughts/jz.html'}}, name="thoughts-jz"),
-
+    
+    # the catchall
+    url(r'^(?P<org_slug>[-\w]+)/$', 'org_page', name='org_page'),
+    url(r'^(?P<org_slug>[-\w]+)/api$', 'org_page_api', name='org_page_api'),
+    url(r'^(?P<org_slug>[-\w]+)/ribbon$', 'org_links', {'link_type' : 'ribbon_links'}, name='org_ribbon_links'),
+    url(r'^(?P<org_slug>[-\w]+)/links$', 'org_links', name='org_links'),
 )
 
 urlpatterns += proxy_urlpatterns

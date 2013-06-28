@@ -208,6 +208,7 @@ function init(options) {
         zipMsg.hide();
         rasterMsg.hide();
         unknownMsg.hide();
+        if (ext == null) return;
         tooLongMsg.hide();
         Ext.get("zip-msg-container").addClass('hide');
         if (base_file.getValue().length > 64) {

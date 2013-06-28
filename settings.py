@@ -338,7 +338,18 @@ ABSOLUTE_URL_OVERRIDES = {
 
 #EMAIL_BACKEND = "mailer.backend.DbBackend"
 
-ENABLE_SOCIAL_LOGIN = False 
+def resolve_user_url(u):
+    contacts = u.contact_set.all()
+    if contacts:
+        return contacts[0].contactdetail.get_absolute_url()
+    else:
+        return None
+
+ABSOLUTE_URL_OVERRIDES = {
+    'auth.user': resolve_user_url
+}
+
+ENABLE_SOCIAL_LOGIN = False
 
 USE_GEONETWORK = False
 

@@ -34,11 +34,13 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template import loader
+from django.template import defaultfilters as filters
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.cache import cache_page
 
 from lxml import etree
 from datetime import datetime
+import json
 import math
 import os
 import random
@@ -138,12 +140,15 @@ def section_detail(req, section):
         'section' : sec,
         'pager' : pager
     }))
-    
+
+
 def resource_detail(req, resource):
     res = get_object_or_404(models.Resource, slug=resource)
     return render_to_response('mapstory/resource.html', RequestContext(req,{
+        'can_edit' : req.user.is_superuser,
         'resource' : res
     }))
+
 
 def get_map_carousel_maps():
     '''Get the carousel ids/thumbnail dict either
@@ -191,6 +196,10 @@ def favoriteslinks(req):
         maps = models.PublishingStatus.objects.get_in_progress(req.user,Map)
     elif layer_or_map == 'layer':
         obj = get_object_or_404(Layer, pk = id)
+        maps = None
+    # only create these links if the user is an Org
+    elif layer_or_map == 'owner' and models.Org.objects.filter(user=req.user).count():
+        obj = get_object_or_404(User, username = id)
         maps = None
     else:
         return HttpResponse('')
@@ -255,11 +264,13 @@ def layer_metadata(request, layername):
     return HttpResponseRedirect(reverse('data_detail', args=[layer.typename]))
     
 @login_required
-def favorite(req, layer_or_map, id):
-    if layer_or_map == 'map':
+def favorite(req, subject, id):
+    if subject == 'map':
         obj = get_object_or_404(Map, pk = id)
-    else:
+    elif subject == 'layer':
         obj = get_object_or_404(Layer, pk = id)
+    elif subject == 'user':
+        obj = get_object_or_404(User, pk = id)
     models.Favorite.objects.create_favorite(obj, req.user)
     return HttpResponse('OK', status=200)
 
@@ -561,6 +572,94 @@ def user_activity_api(req):
         user_activity.notification_preference = req.REQUEST['notification_preference']
         user_activity.save()
         return HttpResponse('OK')
+
+
+def org_page(req, org_slug):
+    org = get_object_or_404(models.Org, slug=org_slug)
+    content = org.orgcontent_set.filter(name='main')
+    # have to resolve using both name and typename due to 'old non-ws-prefixed' layers
+    using = models.get_maps_using_layers_of_user(org.user)
+    ctx = dict(org=org, org_content=content[0].text if content else None,
+               can_edit=req.user.is_superuser or req.user == org.user,
+               using=using
+               )
+    ctx['favs'] = models.Favorite.objects.bulk_favorite_objects(org.user)
+    resp = render_to_response('mapstory/orgs/org_page.html', RequestContext(req, ctx))
+    return resp
+
+
+def org_page_api(req, org_slug):
+    org = get_object_or_404(models.Org, slug=org_slug)
+    if not (req.user == org.user or req.user.is_superuser):
+        raise PermissionDenied()
+    val = req.POST.get('banner_image', None)
+    if val is not None:
+        org.banner_image = val
+        org.save()
+        return HttpResponse(val)
+    val = req.POST.get('org_content', None)
+    if val is not None:
+        cnt, _ = org.orgcontent_set.get_or_create(name='main')
+        cnt.text = val
+        cnt.save()
+        val = filters.escape(val)
+        val = filters.urlize(val)
+        val = filters.linebreaks(val)
+        return HttpResponse(val)
+    return HttpResponse("Invalid Request", status=400)
+
+
+def org_links(req, org_slug, link_type='links'):
+    org = get_object_or_404(models.Org, slug=org_slug)
+    if not (req.user == org.user or req.user.is_superuser):
+        raise PermissionDenied()
+    return _process_links(req, org, 'mapstory/orgs/org_links.html', link_type)
+
+
+def user_links(req, link_type='links'):
+    user = req.user
+    if not (user.is_authenticated() or user.is_superuser):
+        raise PermissionDenied()
+    return _process_links(req, user.get_profile(), 'profiles/edit_links.html',
+                          link_type)
+
+
+def resource_links(req, resource, link_type='links'):
+    res = get_object_or_404(models.Resource, slug=resource)
+    if not req.user.is_superuser:
+        raise PermissionDenied()
+    return _process_links(req, res, 'mapstory/resource_links.html', link_type)
+
+
+def _process_links(req, instance, template, link_type):
+    error = ''
+    m2m = getattr(instance, link_type)
+    if req.method == 'POST':
+        if req.POST['id']:
+            # before updating, make sure the object owns the link
+            # will raise if not
+            link = m2m.get(id = req.POST['id'])
+        else:
+            link = models.Link()
+        if 'delete' in req.POST:
+            link.delete()
+        else:
+            fields = ('name', 'href')
+            if not all([req.POST[f] for f in fields]):
+                error = 'Name and URL are required'
+            else:
+                fields += ('order',)
+                for k,v in [ (f, req.POST[f]) for f in fields]:
+                    if v: setattr(link, k, v)
+                link.save()
+                m2m.add(link)
+    ctx = {
+        'links' : m2m.all().order_by('order'),
+        'link_type' : link_type,
+        'obj' : instance,
+        'error' : error
+    }
+    return render_to_response(template, RequestContext(req, ctx))
 
 
 def layer_xml_metadata(req, layer_id):
