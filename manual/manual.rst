@@ -10,7 +10,7 @@ MapStory Manual
 Introduction
 ============
 
-**MapStory** is a collaborative map sharing and publishing platform with a focus on storytelling. Maps are shown with an element of time to create animations to aid in the storytelling.
+**MapStory** is the collaborative map sharing and publishing platform with a focus on storytelling. Maps are shown with an element of time to create animations to aid in the storytelling.
 
 MapStory empowers all users to discover, play and browse StoryLayers and MapStories published by registered users. Registered users can further contribute by adding their observations about the world in the form of StoryLayers, and to assemble MapStories from any collection of StoryLayers.
 
@@ -614,7 +614,7 @@ Step 7: Add annotations
 Step 8: Publish MapStory
 ------------------------
 
-At this point you're ready to publish your map. At this point, your map will still be set to **Private**, as that is the default.
+The final step is to publish your map. At this point, your map will still be set to **Private**, as that is the default.
 
 * Return to the main viewer by clicking the **View info** link.
 
@@ -627,15 +627,3 @@ At this point you're ready to publish your map. At this point, your map will sti
 * Select **Anyone can search for and view**.
 
 Your map is published! You can give out the URL as noted above and others will be able to see your MapStory.
-
-Step 9: Share Your Mapstory
----------------------------
-
-Your map is published! You can give out the URL as noted above and others will be able to see your MapStory. Now that your MapStory is published, make sure to share your work and your experience!
-
-* Share your MapStory on Twitter or Facebook with **#mapstory**
-* Create a Storyboard video and upload it to the MapStory You Tube account, and link to it in your MapStory's abstract
-* Create a How-To guide that walks others through how you built this MapStory, upload it to the MapStory Wiki, and link to it in your MapStory's abstract
-* Write a blog post about your experience and send it to `blog@mapstory.org`_.
-                    
-.. _blog@mapstory.org: blog@mapstory.org
