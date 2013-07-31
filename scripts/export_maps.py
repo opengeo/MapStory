@@ -6,6 +6,7 @@ from django.conf import settings
 from geonode.maps.models import Layer
 from geonode.maps.models import Map
 
+from mapstory.models import Annotation
 from mapstory.models import User
 from mapstory.models import PublishingStatus
 
@@ -104,18 +105,12 @@ maplayers = sum([m.layers for m in maps], [])
 map_comments = itertools.chain(*map(fetch_map_comments, maps))
 authors = filter(None, map(fetch_author, map_comments))
 publishing_statuses = map(fetch_map_publishingstatus, maps)
+annotations = Annotation.objects.filter(map__in=maps)
 
 def layers_from_map(m):
     layers = list(m.local_layers)
     if not layers:
         print 'no local layers in this map!'
-    # also include the annotations layer if it exists
-    annotation_layer_typename = "geonode:_map_%s_annotations" % m.id
-    try:
-        annotation_layer = Layer.objects.get(typename=annotation_layer_typename)
-        layers.append(annotation_layer)
-    except Layer.DoesNotExist:
-        pass
     return layers
 
 # get a list of all layers to export
@@ -181,6 +176,9 @@ with open(temppath('comment_users.json'), 'w') as f:
 # export the maps' publishing_statuses
 with open(temppath('map_publishing_status.json'), 'w') as f:
     json_serializer.serialize(publishing_statuses, stream=f)
+
+with open(temppath('annotations.json'), 'w') as f:
+    json_serializer.serialize(annotations, stream=f)
 
 # create the uber zip
 zipfilename = args[0]
