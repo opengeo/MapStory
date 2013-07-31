@@ -22,7 +22,6 @@ def make_updater(from_string, to_string, *attrs):
             orig_value = getattr(model, attr)
             if not orig_value: continue
             matcher = make_matcher(from_string)
-            print matcher.pattern
             new_value = matcher.sub(to_string, orig_value)
             if attr == 'ows_url':
                 print orig_value, new_value
