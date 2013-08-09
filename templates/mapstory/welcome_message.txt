@@ -8,7 +8,7 @@ MapStorytelling is a process of using open data and your own perspective to tell
 
 CONTRIBUTE
 
-There's three ways to contribute to MapStory. If you have data to share, Add StoryLayers ( http://mapstory.org/data/upload/ ). If you have a story to tell, draw on existing StoryLayers and Build a MapStory ( http://mapstory.org/maps/new ). And if you just want to share some knowledge you have or help others improve, become a Curator ( http://wiki.mapstory.org/index.php?title=Curation_Guide )
+There's three ways to contribute to MapStory. If you have data to share, Add StoryLayers ( http://mapstory.org/data/upload/ ). If you have a story to tell, draw on existing StoryLayers and Build a MapStory ( http://mapstory.org/maps/new ). And if you just want to share some knowledge you have or help others improve, become a Curator ( http://wiki.mapstory.org/index.php?title=Curation_Guide ).
 
 JOIN THE COMMUNITY
 
