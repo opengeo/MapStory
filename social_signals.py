@@ -3,6 +3,7 @@ from django.db.models.signals import m2m_changed
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.template import loader
+from django.template import Context
 from django.core.files import File
 from django.core.files.temp import NamedTemporaryFile
 from geonode.maps.models import Layer
@@ -46,6 +47,26 @@ def batch_notification(days=1):
                        from_email="do-not-reply@mapstory.org", 
                        recipient_list=[u.email])
 
+def daily_user_welcomes():
+    oneday = datetime.timedelta(days=1)
+    endtime = datetime.datetime.now() - oneday
+    starttime = endtime - oneday
+    users = User.objects.filter(date_joined__lte = endtime)
+    users.filter(date_joined__gt = starttime)
+    for user in users:
+        send_user_welcome(user)
+
+WELCOME_EMAIL_TXT = loader.get_template('mapstory/welcome_message.txt')
+WELCOME_EMAIL_HTML = loader.get_template('mapstory/welcome_message.html')
+
+def send_user_welcome(user):
+    c = Context({'user': user}) # in case we want to template the user name 
+    _logger.info('sending welcome message to %s', user.email)
+    send_html_mail("[MapStory] Welcome To MapStory",
+                   message=WELCOME_EMAIL_TXT.render(c),
+                   message_html=WELCOME_EMAIL_HTML.render(c),
+                   from_email="do-not-reply@mapstory.org", 
+                   recipient_list=[user.email])
 
 def notify_handler(sender, instance, action, model, pk_set, **kwargs):
     if action != 'post_add': return
