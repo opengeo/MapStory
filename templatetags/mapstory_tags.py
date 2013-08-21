@@ -493,10 +493,16 @@ def ext_link(cat, name, text='', classes=None, title=None, **kw):
     extra = ' '.join(['%s="%s"' % i for i in kw.items()])
     return '<a href="%s"%s%s%s>%s</a>' % (url, classes, title, extra, text)
 
+
 @register.simple_tag
 def wiki_help_link(name, text='', title='Learn More', classes=''):
     classes = 'icon-question-sign icon-orange ' + classes
     return ext_link('wiki', name, text=text, classes=classes, title=title, target='_')
+
+
+@register.inclusion_tag('maps/_widget_flag.html', takes_context=True)
+def flag_widget(context, flag_object):
+    return { 'flag_object': flag_object, 'request': context['request'] }
     
 
 # @todo - make geonode location play better

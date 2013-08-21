@@ -187,8 +187,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                             <textarea><iframe style="border: none;" height="400" width="600" src="http://{{ request.get_host }}{% url geonode.maps.views.embed map.id %}"></iframe></textarea>
                         </div>
                         <div class="tab-pane flag" id="actions4">
-                            Flag this as inappropriate, broken, or otherwise.
-                            {% flag map "owner" %}
+                            {% flag_widget map %}
                         </div>
                         <div class="tab-pane" id="actions5">
                             {% if user.is_authenticated %}
@@ -229,6 +228,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
 {% block extra_body %}
 {% if request.user.is_authenticated %}
 	{% user_rating_js request.user map "map" %}
+    <script src="{% static "script/flag_helper.js" %}"></script>
 {% else %}
 	<script src="{% static "agon_ratings/js/jquery.raty.js" %}"></script>
 {% endif %}

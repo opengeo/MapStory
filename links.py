@@ -2,7 +2,10 @@ links = {
     "wiki" : {
         "prefix" : "http://wiki.mapstory.org/index.php?title=",
         "links" : [
-            ("curation_guide_ratings", "Curation_Guide#Ratings")
+            ("curation_guide_ratings", "Curation_Guide#Ratings"),
+            ("curation_guide_flag_broken", "Curation_Guide#Flagging_Content_as_Broken"),
+            ("curation_guide_flag_inappropriate", "Curation_Guide#Flagging_Content_as_Inappropriate"),
+            ("curation_guide_flag_inaccurate", "Curation_Guide#Flagging_Content_as_Inaccurate"),
         ]
     }
 }
