@@ -13,6 +13,7 @@ $(function() {
         }
         msg.find('.alert-info').addClass('hide');
     }
+    form.find('[name=comment]').attr('placeholder', 'Tell us a little bit more about this issue...')
     form.on('submit', function(ev) {
         var selectedStatus = status.filter(":checked").val();
         ev.preventDefault();

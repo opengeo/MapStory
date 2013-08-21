@@ -1,7 +1,8 @@
 {% load flag_tags %}
 {% load mapstory_tags %}
 <div class="clearfix">
-    <p>Flag this as inappropriate, broken, or otherwise.</p>
+    {% if request.user.is_authenticated %}
+    <p>Flag this as inappropriate or broken.</p>
     <div class="msg">
         <div class="alert alert-error hide"></div>
         <div class="alert alert-info hide"></div>
@@ -17,13 +18,13 @@
                 <input type='radio' name='flag_type' value="inappropriate" id='id_inappropriate'><label for='id_inappropriate'>Inappropriate</label>
                 {% wiki_help_link 'curation_guide_flag_inappropriate'%}
             </li>
-            <li>
-                <input type='radio' name='flag_type' value="inaccurate" id='id_inaccurate'><label for='id_inaccurate'>Inaccurate</label>
-                {% wiki_help_link 'curation_guide_flag_inaccurate'%}
-            </li>
         </ul>
     </div>
     <div class="pull-right" style="width:70%;">
         {% flag flag_object 'owner' %}
     </div>
+    {% else %}
+    Please login to flag content.
+    {% endif %}
+
 </div>
