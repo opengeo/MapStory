@@ -208,6 +208,10 @@ if settings.ENABLE_SOCIAL_LOGIN:
         url(r'^oauth2/', include('provider.oauth2.urls', namespace = 'oauth2')),
     )
 
+urlpatterns += patterns('',
+        url(r'^messages/', include('messages.urls')),
+        )
+
 # Extra static file endpoint for development use
 if settings.SERVE_MEDIA:
     urlpatterns += patterns('',
