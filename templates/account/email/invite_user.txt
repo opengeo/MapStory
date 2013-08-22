@@ -14,7 +14,7 @@ history.  Like Wikipedia, all data that you add to  MapStory is
 contributed to the global data commons.  For more details, the
 MapStory license and copyright can be read here. per the terms in
 this license:
-http://wiki.mapstory.org/index.php?title=License_and_Copyright.
+{% ext_link 'wiki' 'license_and_copyright' %} 
 
 
 Please do not reply to this e-mail.  If you have questions about
