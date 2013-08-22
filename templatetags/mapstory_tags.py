@@ -485,19 +485,23 @@ def ext_url(cat, name):
 
 
 @register.simple_tag
-def ext_link(cat, name, text='', classes=None, title=None, **kw):
+def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
     # if not provided, title could resolve to a defined title at some point
     url = resolve_link(cat, name)
     classes = ' class="%s"' % classes if classes else ''
     title = ' title="%s"' % title if title else ''
+    rel = ' rel="%s"' % rel if rel else ''
     extra = ' '.join(['%s="%s"' % i for i in kw.items()])
-    return '<a href="%s"%s%s%s>%s</a>' % (url, classes, title, extra, text)
+    return '<a href="%s"%s%s%s%s>%s</a>' % (url, classes, rel,  title, extra, text)
 
 @register.simple_tag
-def wiki_help_link(name, text='', title='Learn More', classes=''):
-    classes = 'icon-question-sign icon-orange ' + classes
-    return ext_link('wiki', name, text=text, classes=classes, title=title, target='_')
+def wiki_link(name, text='', title='', classes='', rel = ''):
+    return ext_link('wiki', name, text=text, classes=classes, rel=rel,  title=title, target='_')
     
+@register.simple_tag
+def wiki_help_link(name, text='', title='Learn More', classes='', rel = ''):
+    classes = 'icon-question-sign icon-orange ' + classes
+    return wiki_link(name, text, title, classes, rel )
 
 # @todo - make geonode location play better
 if settings.GEONODE_CLIENT_LOCATION.startswith("http"):
