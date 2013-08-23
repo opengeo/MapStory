@@ -121,6 +121,7 @@ urlpatterns += patterns('mapstory.views',
     url(r'^mapstory/add-to-map/(?P<id>\d+)/(?P<typename>[:\w]+)','add_to_map',name='add_to_map'),
     url(r'^search/favoriteslinks$','favoriteslinks',name='favoriteslinks'),
     url(r'^search/favoriteslist$','favoriteslist',name='favoriteslist'),
+    url(r'^email/test$','render_email',name='render_email'),
 
     url(r'^ajax/hitcount/$', update_hit_count_ajax, name='hitcount_update_ajax'),
 

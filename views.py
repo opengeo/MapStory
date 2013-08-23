@@ -588,3 +588,7 @@ def _remove_annotation_layer(sender, instance, **kw):
         pass
 
 signals.pre_delete.connect(_remove_annotation_layer, sender=Map)
+
+def render_email(request):
+    t = request.GET['t']
+    return render_to_response(t, RequestContext(request,{'user': {'first_name': 'FIRST NAME'}}))
