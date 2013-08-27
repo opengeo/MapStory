@@ -9,11 +9,12 @@ Ext.onReady(function() {
     "<div class='rating'>{views} Views | {rating} stars <span class='more'>More &#9660;</span></div>"+
     "<div class='actions' id='{_type}-{id}'></div>"+
     "</li>",
-    ownerTemplate = "<li class='tile' id='item{iid}'><img class='thumb {thumbclass}' src='{thumb}'></img>" +
+    ownerTemplate = "<li class='tile' id='item{iid}'><a href='{detail}'><img class='thumb {thumbclass}' src='{thumb}'></img></a>" +
     "<div class='infoBox'><div class='itemTitle'><a href='{detail}'>{title}</a> <span class='org'>{organization}</span></div>" +
     "<div class='itemInfo'>Joined on {last_modified}</div>" +
     "<div class='itemInfo'>{map_cnt} MapStories, {layer_cnt} StoryLayers</div>"+
     "<div class='itemAbstract'>{abstract}</div>"+
+    "<span class='more'>More &#9660;</span>"+
     "<div class='actions' id='{_type}-{id}'></div>"+
     "</li>" ,
     filterTemplate = "<div class='removeFilter {typeclass}'><img height='8' src='/static/theme/img/silk/delete.png' class='removeFilter' href='#removeFilter'> </a><strong>{type}</strong> {value}</div>",
@@ -230,13 +231,14 @@ Ext.onReady(function() {
     }
 
     if (init_search) {
-        if (init_search.q) {
-            Ext.get('searchField').dom.value = init_search.q;
-        }
         if ('bytype' in init_search) {
             Ext.get('bytype').parent('.refineSection').setVisibilityMode(Ext.Element.DISPLAY).hide();
         }
         queryItems = init_search;
+        if (init_search.q) {
+            Ext.get('searchField').dom.value = init_search.q;
+            useRelevanceSorting();
+        }
     }
     fetch();
     var scrollEl = Ext.isIE ? window : document;
@@ -549,6 +551,11 @@ Ext.onReady(function() {
     new Ext.ToolTip({
         target: 'filter-tip'
     });
+
+    function useRelevanceSorting() {
+        Ext.select('#sortForm select').item(0).dom.selectedIndex = 5; // @todo
+        queryItems['sort'] = 'rel';
+    }
     
     // and combine with search form
     Ext.get('searchForm').on('keypress',function(ev) {
@@ -556,7 +563,7 @@ Ext.onReady(function() {
         if (keycode == '13') {
             ev.preventDefault();
             queryItems['q'] = this.dom.search.value;
-            Ext.select('#sortForm select').item(0).dom.selectedIndex = 5;
+            useRelevanceSorting();
             reset();
         }
     });

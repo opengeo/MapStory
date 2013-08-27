@@ -1,20 +1,27 @@
+from datetime import datetime
 import random
 import operator
+import os
 import re
 import logging
 import time
+import urlparse
 import urllib
 import json
 
 from django.conf import settings
+from django.contrib.gis.db import models as gis
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import Count
 from django.db.models import signals
 from django.db.models import Q
+from django.db.models.signals import post_delete
+from django.dispatch.dispatcher import receiver
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
 from django.template import defaultfilters
 from django.utils.hashcompat import md5_constructor
@@ -25,11 +32,14 @@ from geonode.core.models import AUTHENTICATED_USERS
 from geonode.core.models import ANONYMOUS_USERS
 from geonode.maps.models import Contact
 from geonode.maps.models import Map
+from geonode.maps.models import MapLayer
+from geonode.maps.models import map_copied_signal
 from geonode.maps.models import Layer
 from geonode.maps.models import LayerManager
 from geonode.upload.signals import upload_complete
 
 from mapstory import gwc_config
+from mapstory.util import parse_date_time
 
 from avatar.signals import avatar_updated
 from hitcount.models import HitCount
@@ -114,6 +124,13 @@ def get_related_stories(obj):
     return maps
 
 
+def get_maps_using_layers_of_user(user):
+    q = MapLayer.objects.filter(name__in=Layer.objects.filter(owner=user).values('name')) | \
+        MapLayer.objects.filter(name__in=Layer.objects.filter(owner=user).values('typename'))
+    ids = q.values('map')
+    return Map.objects.filter(id__in=ids)
+
+
 class SectionManager(models.Manager):
     def sections_with_maps(self):
         '''@todo this is broken - Get only those sections that have maps'''
@@ -185,11 +202,66 @@ class Section(models.Model):
     def __unicode__(self):
         return 'Section %s' % self.name
 
-    
+
 class Link(models.Model):
     name = models.CharField(max_length=64)
-    href = models.CharField(max_length=256)
+    href = models.URLField(max_length=256)
     order = models.IntegerField(default=0, blank=True, null=True)
+
+    def is_image(self):
+        ext = os.path.splitext(self.href)[1][1:].lower()
+        return ext in ('gif','jpg','jpeg','png')
+
+    def _get_link(self, *paths):
+        prefix = 'https?://(?:w{3}\.)?'
+        for p in paths:
+            match = re.match(prefix + p, self.href)
+            if match:
+                return match.group(1)
+
+    def get_youtube_video(self):
+        return self._get_link(
+            'youtube.com/watch\?v=(\S+)',
+            'youtu.be/(\S+)',
+            'youtube.com/embed/(\S+)',
+        )
+
+    def get_twitter_link(self):
+        return self._get_link('twitter.com/(\S+)')
+    
+    def get_facebook_link(self):
+        return self._get_link('facebook.com/(\S+)')
+
+    def render(self, width=None, height=None, css_class=None):
+        '''width and height are just hints - ignored for images'''
+
+        ctx = dict(href=self.href, link_content=self.name, css_class=css_class, width='', height='')
+        if self.is_image():
+            return '<img class="%(css_class)s" src="%(href)s" title="%(link_content)s"></img>' % ctx
+
+        video = self.get_youtube_video()
+        if video:
+            ctx['video'] = video
+            ctx['width'] = 'width="%s"' % width
+            ctx['height'] = 'height="%s"' % height
+            return ('<iframe class="youtube-player" type="text/html"'
+                    ' %(width)s %(height)s frameborder="0"'
+                    ' src="http://www.youtube.com/embed/%(video)s">'
+                    '</iframe>') % ctx
+
+        known_links = [
+            (self.get_twitter_link, static('img/twitter.png')),
+            (self.get_facebook_link, static('img/facebook.png')),
+        ]
+        for fun, icon in known_links:
+            if fun():
+                ctx['link_content'] = '<img src="%s" border=0>' % icon
+                break
+
+        return '<a target="_" href="%(href)s">%(link_content)s</a>' % ctx
+
+    render.allow_tags = True
+
 
 _VIDEO_LOCATION_FRONT_PAGE = 'FP'
 _VIDEO_LOCATION_HOW_TO = 'HT'
@@ -241,11 +313,12 @@ class UserActivity(models.Model):
 
 class ContactDetail(Contact):
     '''Additional User details'''
-    blurb = models.CharField(max_length=140, null=True)
+    blurb = models.CharField(max_length=140, null=True, blank=True)
     biography = models.CharField(max_length=1024, null=True, blank=True)
     education = models.CharField(max_length=512, null=True, blank=True)
     expertise = models.CharField(max_length=256, null=True, blank=True)
-    links = models.ManyToManyField(Link)
+    links = models.ManyToManyField(Link, blank=True)
+    ribbon_links = models.ManyToManyField(Link, blank=True, related_name='contactdetail_ribbon_links_set')
 
     def clean(self):
         'override Contact name or organization restriction'
@@ -257,7 +330,7 @@ class ContactDetail(Contact):
         if not self._has_avatar():
             incomplete.append('Picture/Avatar')
         if not all([self.user.first_name, self.user.last_name]):
-            incomplete.append('Full Name')
+            incomplete.append('Full Name (First and Last)')
         if not self.blurb:
             incomplete.append('Blurb')
         return incomplete
@@ -278,9 +351,7 @@ class ContactDetail(Contact):
         incomplete = self.audit()
         if incomplete:
             pi, _ = ProfileIncomplete.objects.get_or_create(user=self.user)
-            pi.message = ('Please ensure the following '
-            'fields are complete: %s'
-            ) % ', '.join(incomplete)
+            pi.message = ', '.join(incomplete)
             pi.save()
         else:
             ProfileIncomplete.objects.filter(user=self.user_id).delete()
@@ -293,10 +364,74 @@ class ContactDetail(Contact):
             name = self.user.username
         return name
 
+    def get_absolute_url(self):
+        if hasattr(self, 'org'):
+            return self.org.get_absolute_url()
+        return reverse('about_storyteller', args=[self.user.username])
+
+    def __unicode__(self):
+        return u"[ ContactDetail for %s ]" % self.display_name
+
+
 class ProfileIncomplete(models.Model):
     '''Track incomplete user profiles'''
     user = models.OneToOneField(User)
     message = models.TextField()
+
+
+# cannot be called Organization - the organization field is used already in Contact
+class Org(ContactDetail):
+    slug = models.SlugField(max_length=64, blank=True, unique=True)
+    members = models.ManyToManyField(User, blank=True)
+    banner_image = models.URLField(null=True, blank=True)
+    
+    def get_absolute_url(self):
+        return reverse('org_page', args=[self.slug])
+    
+    def save(self,*args,**kw):
+        # ensure a user exists but make sure after the contact exists
+        # or our signal will create a ContactDetail for the user
+        if self.user is None:
+            self.user = User.objects.create(username=self.organization)
+            self.id = ContactDetail.objects.filter(user=self.user)[0].id
+        if not self.name:
+            self.name = self.organization
+        if not self.slug:
+            self.slug = Org.slugify_org(self.organization)
+        models.Model.save(self)
+
+    @staticmethod
+    def slugify_org(text):
+        slugtext = text.replace('&','and')
+        return defaultfilters.slugify(slugtext)
+
+    def get_link(self, link_id):
+        try:
+            return self.links.get(id = link_id)
+        except:
+            pass
+        try:
+            return self.ribbon_links.get(id = link_id)
+        except:
+            pass
+        return None
+
+    def ordered_links(self):
+        return self.links.all().order_by('order')
+
+    def ordered_ribbon_links(self):
+        return self.ribbon_links.all().order_by('order')
+
+    def get_absolute_url(self):
+        return reverse('org_page', args=[self.slug])
+
+    def __unicode__(self):
+        return u"Org %s (%s)" % (self.user, self.organization)
+    
+class OrgContent(models.Model):
+    name = models.CharField(max_length=32)
+    text = models.TextField(null=True, blank=True)
+    org = models.ForeignKey(Org)
 
 
 class Resource(models.Model):
@@ -304,6 +439,8 @@ class Resource(models.Model):
     slug = models.SlugField(max_length=64,blank=True)
     order = models.IntegerField(null=True,blank=True)
     text = models.TextField(null=True)
+    links = models.ManyToManyField(Link, blank=True)
+    ribbon_links = models.ManyToManyField(Link, blank=True, related_name='resource_ribbon_links_set')
 
     def save(self,*args,**kw):
         slugtext = self.name.replace('&','and')
@@ -321,9 +458,27 @@ class FavoriteManager(models.Manager):
     def favorites_for_user(self, user):
         return self.filter(user=user)
 
+    def _favorite_ct_for_user(self, user, model):
+        content_type = ContentType.objects.get_for_model(model)
+        return self.favorites_for_user(user).filter(content_type=content_type).prefetch_related('content_object')
+
     def favorite_maps_for_user(self, user):
-        content_type = ContentType.objects.get_for_model(Map)
-        return self.favorites_for_user(user).filter(content_type=content_type)
+        return self._favorite_ct_for_user(user, Map)
+
+    def favorite_layers_for_user(self, user):
+        return self._favorite_ct_for_user(user, Layer)
+
+    def favorite_users_for_user(self, user):
+        return self._favorite_ct_for_user(user, User)
+
+    def bulk_favorite_objects(self, user):
+        'get the actual favorite objects for a user as a dict by content_type'
+        favs = {}
+        for m in (Map, Layer, User):
+            ct = ContentType.objects.get_for_model(m)
+            f = self.favorites_for_user(user).filter(content_type=ct)
+            favs[ct.name] = m.objects.filter(id__in = f.values('object_id'))
+        return favs
 
     def create_favorite(self, content_object, user):
         content_type = ContentType.objects.get_for_model(type(content_object))
@@ -362,9 +517,13 @@ PUBLISHING_STATUS_CHOICES = [
     (PUBLISHING_STATUS_PUBLIC,PUBLISHING_STATUS_PUBLIC)
 ]
 
+
 class PublishingStatusMananger(models.Manager):
-    def get_public(self, user, model):
-        return model.objects.filter(owner=user, publish__status=PUBLISHING_STATUS_PUBLIC)
+    def get_public(self, user, model, viewer=None):
+        query = model.objects.filter(owner=user)
+        if viewer != user:
+            query = query.filter(publish__status=PUBLISHING_STATUS_PUBLIC)
+        return query
     def get_in_progress(self, user, model):
         if model == Layer:
             # don't show annotations
@@ -385,6 +544,7 @@ class PublishingStatusMananger(models.Manager):
         # verify a valid status
         stat.clean_fields()
         stat.save()
+
 
 class PublishingStatus(models.Model):
     '''This is a denormalized model - could have gone with a content-type
@@ -434,8 +594,51 @@ class PublishingStatus(models.Model):
         obj.set_gen_level(AUTHENTICATED_USERS, level)
         obj.set_user_level(owner, obj.LEVEL_ADMIN)
         models.Model.save(self, *args)
-        
-        
+
+
+class AnnotationManager(gis.GeoManager):
+    
+    def copy_map_annotations(self, source_id, target):
+        source = Map.objects.get(id=source_id)
+        copies = []
+        for ann in source.annotation_set.all():
+            ann.map = target
+            ann.pk = None
+            copies.append(ann)
+        Annotation.objects.bulk_create(copies)
+
+
+class Annotation(models.Model):
+    objects = AnnotationManager()
+
+    map = models.ForeignKey(Map)
+    title = models.TextField()
+    content = models.TextField(blank=True, null=True)
+    the_geom = gis.GeometryField(blank=True, null=True)
+    start_time = models.BigIntegerField(blank=True, null=True)
+    end_time = models.BigIntegerField(blank=True, null=True)
+    in_timeline = models.BooleanField()
+    in_map = models.BooleanField()
+    appearance = models.TextField(blank=True, null=True)
+
+    def _timefmt(self, val):
+        return datetime.isoformat(datetime.utcfromtimestamp(val))
+
+    def set_start(self, val):
+        self.start_time = parse_date_time(val)
+
+    def set_end(self, val):
+        self.end_time = parse_date_time(val)
+
+    @property
+    def start_time_str(self):
+        return self._timefmt(self.start_time) if self.start_time else ''
+
+    @property
+    def end_time_str(self):
+        return self._timefmt(self.end_time) if self.end_time else ''
+
+
 def audit_layer_metadata(layer):
     '''determine if metadata is complete to allow publishing'''
     return all([
@@ -457,8 +660,9 @@ def audit_map_metadata(mapobj):
 
 def user_saved(instance, sender, **kw):
     if kw['created']:
-        cd = ContactDetail.objects.create(user = instance)
+        cd, _ = ContactDetail.objects.get_or_create(user = instance)
         cd.update_audit()
+
 
 def create_publishing_status(instance, sender, **kw):
     if kw['created']:
@@ -502,8 +706,17 @@ def create_user_activity(sender, instance, created, **kw):
         UserActivity.objects.create(user=instance)
 
 
+def map_copied(sender, source_id, **kw):
+    Annotation.objects.copy_map_annotations(source_id, sender)
+
+
 def audit_profile(sender, user, avatar, **kw):
     user.get_profile().update_audit()
+
+
+@receiver(post_delete, sender=Org)
+def org_delete_user(sender, instance, **kwargs):
+    instance.user.delete()
 
 
 signals.post_save.connect(create_user_activity, sender=User)
@@ -526,6 +739,8 @@ upload_complete.connect(set_publishing_private, sender=None)
 upload_complete.connect(configure_gwc, sender=None)
 # @annoyatron2 - after map is saved, set_default_permissions is called - hack this
 Map.set_default_permissions = lambda s: None
+
+map_copied_signal.connect(map_copied)
 
 # ensure hit count records are created up-front
 signals.post_save.connect(create_hitcount, sender=Map)

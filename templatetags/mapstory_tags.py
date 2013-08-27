@@ -9,6 +9,7 @@ from django.conf import settings
 from geonode.maps.models import Map
 from geonode.maps.models import Layer
 from geonode.maps.models import ALL_LANGUAGES
+from mapstory.links import resolve_link
 from mapstory.models import ContactDetail
 from mapstory.models import Section
 from mapstory.models import Favorite
@@ -25,6 +26,7 @@ from mapstory.views import _storyteller_activity_pager
 from dialogos.templatetags import dialogos_tags
 
 import re
+import os
 
 register = template.Library()
 
@@ -187,7 +189,7 @@ class CommentsSectionNode(dialogos_tags.ThreadedCommentsNode):
 def resource_menu(exclude=None):
     q = Resource.objects.all()
     if exclude:
-        q = q.exclude(slug=exclude)
+        q = q.exclude(pk=exclude.pk)
     return loader.render_to_string("mapstory/_resource_menu.html", {
         'resources' : q
     })
@@ -221,29 +223,18 @@ class FavoritesNode(template.Node):
             "in_progress_layers" : layers
         }
         return loader.render_to_string(template_name,ctx)
-    
-@register.tag
-def add_to_favorites(parse, token):
-    try:
-        tokens = token.split_contents()
-        tag_name = tokens.pop(0)
-        obj_name = tokens.pop(0)
-    except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
-    return AddToFavoritesNode(obj_name)
 
-class AddToFavoritesNode(template.Node):
-    def __init__(self,obj_name):
-        self.obj_name = obj_name
-    def render(self, context):
-        template = '<a class="add-to-favorites btn btn-mini" href="%s"><i class="icon-heart"></i>%s</a>'
-        obj = context[self.obj_name]
-        obj_name = isinstance(obj,Map) and "map" or "layer"
-        url = "add_favorite_%s" % obj_name
-        url = reverse(url, args=[obj.pk])
-        text = "Add to Favorites"
-        return template % (url,text)
-    
+
+@register.simple_tag
+def add_to_favorites(obj):
+    template = '<a class="add-to-favorites btn btn-mini" href="%s"><i class="icon-heart"></i>%s</a>'
+    obj_name = type(obj).__name__.lower()
+    url = "add_favorite_%s" % obj_name
+    url = reverse(url, args=[obj.pk])
+    text = "Add to Favorites"
+    return template % (url,text)
+
+
 @register.tag
 def add_to_map(parse, token):
     try:
@@ -266,15 +257,16 @@ class AddToMapNode(template.Node):
             'layer' : layer
         })
 
+
 @register.simple_tag
-def by_storyteller(obj):
+def by_storyteller(obj, req):
     if isinstance(obj, User):
         user = obj
     else:
         user = obj.owner
     template_name = "maps/_widget_by_storyteller.html"
-    maps_page = Page([], 0, _by_storyteller_pager(None, user, 'maps'))
-    layers_page = Page([], 0, _by_storyteller_pager(None, user, 'layers'))
+    maps_page = Page([], 0, _by_storyteller_pager(req, user, 'maps'))
+    layers_page = Page([], 0, _by_storyteller_pager(req, user, 'layers'))
     return loader.render_to_string(template_name,{
         'user':user,
         'maps_pager': maps_page,
@@ -369,6 +361,15 @@ def activity_notifier(user):
             return '<span title="Recent Activity" class="actnot">(%s)</span>' % cnted
     return ''
 
+
+@register.simple_tag
+def render_link(link, width=None, height=None, css_class=None):
+    '''Render a 'link' as best as possible. This means either an img element,
+    a youtube embedded viewer, or a default link. Ideally, support oembed.
+    '''
+    return link.render(width, height, css_class)
+
+
 @register.simple_tag
 def layer_language_selector(layer):
     s = ("selected='selected' ",)
@@ -387,6 +388,19 @@ def manual_link(target, name):
 @register.simple_tag
 def manual_include(path):
     return "<div id='manual'>%s</div>" % render_manual(path)
+
+@register.simple_tag
+def storyteller_tile(user):
+    ctx = dict(user=user, map_cnt=Map.objects.filter(owner=user).count(),
+               layer_cnt=Layer.objects.filter(owner=user).count())
+    return loader.render_to_string('mapstory/_user_tile.html', ctx)
+
+
+@register.simple_tag
+def media_ribbon(links):
+    return loader.render_to_string('mapstory/_media_ribbon.html', {
+        'links' : links
+    })
 
 
 @register.simple_tag
@@ -412,6 +426,10 @@ def warn_missing_thumb(obj):
     if not obj.get_thumbnail():
         return loader.render_to_string('maps/_warn_thumbnail.html', {})
     return ""
+
+@register.simple_tag
+def user_activity_email_prefs(user):
+    return loader.render_to_string('mapstory/user_activity_email_prefs.html',{'user': user})
 
 @register.simple_tag
 def pagination(pager, url_name, *args):
@@ -454,7 +472,36 @@ def twitter_card_meta(obj):
         'url' : absolutize(obj.get_absolute_url()),
         'image' : obj.get_thumbnail_url()
     })
+
+
+@register.simple_tag
+def google_analytics():
+    return loader.render_to_string('ga.html', {}) if settings.ENABLE_ANALYTICS else ''
+
+
+@register.simple_tag
+def ext_url(cat, name):
+    return resolve_link(cat, name)
+
+
+@register.simple_tag
+def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
+    # if not provided, title could resolve to a defined title at some point
+    url = resolve_link(cat, name)
+    classes = ' class="%s"' % classes if classes else ''
+    title = ' title="%s"' % title if title else ''
+    rel = ' rel="%s"' % rel if rel else ''
+    extra = ' '.join(['%s="%s"' % i for i in kw.items()])
+    return '<a href="%s"%s%s%s%s>%s</a>' % (url, classes, rel,  title, extra, text)
+
+@register.simple_tag
+def wiki_link(name, text='', title='', classes='', rel = ''):
+    return ext_link('wiki', name, text=text, classes=classes, rel=rel,  title=title, target='_')
     
+@register.simple_tag
+def wiki_help_link(name, text='', title='Learn More', classes='', rel = ''):
+    classes = 'icon-question-sign icon-orange ' + classes
+    return wiki_link(name, text, title, classes, rel )
 
 # @todo - make geonode location play better
 if settings.GEONODE_CLIENT_LOCATION.startswith("http"):

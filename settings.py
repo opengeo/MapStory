@@ -88,8 +88,6 @@ THUMBNAIL_STORAGE = os.path.join(PROJECT_ROOT, 'thumbs')
 THUMBNAIL_URL = '/thumbs/'
 DEFAULT_MAP_THUMBNAIL = '%stheme/img/img_95x65.png' % STATIC_URL
 
-STATICFILES_STORAGE = 'staticfiles.storage.StaticFilesStorage'
-
 # Additional directories which hold static files
 STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'media'),
@@ -149,7 +147,7 @@ GEONETWORK_BASE_URL = "http://localhost:8001/geonetwork/"
 # The username and password for a user with write access to GeoNetwork
 GEONETWORK_CREDENTIALS = "admin", "admin"
 
-AUTHENTICATION_BACKENDS = ('geonode.core.auth.GranularBackend',)
+AUTHENTICATION_BACKENDS = ('geonode.core.auth.GranularBackend','mapstory.util.SuperuserLoginAuthenticationBackend')
 
 GOOGLE_API_KEY = "ABQIAAAAkofooZxTfcCv9Wi3zzGTVxTnme5EwnLVtEDGnh-lFVzRJhbdQhQgAhB1eT_2muZtc0dl-ZSWrtzmrw"
 LOGIN_REDIRECT_URL = "/"
@@ -340,14 +338,33 @@ ABSOLUTE_URL_OVERRIDES = {
 
 #EMAIL_BACKEND = "mailer.backend.DbBackend"
 
-ENABLE_SOCIAL_LOGIN = False 
+def resolve_user_url(u):
+    from django.db.models.base import ObjectDoesNotExist
+    try:
+        profile = u.get_profile()
+    except ObjectDoesNotExist:
+        profile = None
+    return profile.get_absolute_url() if profile else None
+
+ABSOLUTE_URL_OVERRIDES = {
+    'auth.user': resolve_user_url
+}
+
+ENABLE_SOCIAL_LOGIN = False
+
+USE_GEONETWORK = False
 
 try:
     from local_settings import *
 except ImportError:
     pass
 
+ACCOUNT_SIGNUP_REDIRECT_URL = '/profiles/edit/'
+
 if ENABLE_SOCIAL_LOGIN:
+
+    SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/profiles/edit/'
+
     INSTALLED_APPS = INSTALLED_APPS + (
         'social_auth',
         'provider',
@@ -367,4 +384,5 @@ if ENABLE_SOCIAL_LOGIN:
         'social_auth.backends.pipeline.social.associate_user',
         'social_auth.backends.pipeline.user.update_user_details',
         'mapstory.social_signals.get_user_avatar', 
+        'mapstory.social_signals.audit_user', 
 )

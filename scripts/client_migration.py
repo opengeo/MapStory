@@ -1,3 +1,4 @@
+import os.path
 # support for client config migrations
 #
 #
@@ -7,12 +8,19 @@ import optparse # for 2.6 support
 import os
 import sys
 
+os.environ['DJANGO_SETTINGS_MODULE'] = "mapstory.settings"
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from django.db import transaction
 from django.core import serializers
+from django.conf import settings
 from geonode.maps.models import MapLayer
 from geonode.maps.models import Map
 
 
-os.environ['DJANGO_SETTINGS_MODULE'] = "mapstory.settings"
+class MigrationException(Exception):
+    pass
+
 
 class ConfigMigration(object):
 
@@ -22,24 +30,44 @@ class ConfigMigration(object):
 
     def do_backup(self):
         'dump serialized models before changing them'
-        if not self.query_set:
+        if self.query_set is None:
             raise Exception('need a query_set defined')
         backup_name = '%s_backup.json' % self.__class__.__name__
         if not self.opts.force_backup and os.path.exists(backup_name):
-            raise Exception('backup file exists, please delete : %s' % backup_name)
-        data = serializers.serialize("json", self.query_set)
-        with open(backup_name, 'w') as fp:
-            fp.write(data)
-        print 'backed up %s models to %s' % (self.query_set.count(), backup_name)
+            raise MigrationException('backup file exists, please delete or provide -f option : %s' % backup_name)
+        if self.query_set.count():
+            data = serializers.serialize("json", self.query_set)
+            with open(backup_name, 'w') as fp:
+                fp.write(data)
+            print 'backed up %s models to %s' % (self.query_set.count(), backup_name)
+            
+    def _get_backup(self):
+        backup_name = '%s_backup.json' % self.__class__.__name__
+        if not os.path.exists(backup_name):
+            raise MigrationException('no backup present')
+        return serializers.deserialize("json", open(backup_name).read())
 
     def restore(self):
         'restore from serialized models'
-        backup_name = '%s_backup.json' % self.__class__.__name__
-        if not os.path.exists(backup_name):
-            raise Exception('no backup present')
-        for obj in serializers.deserialize("json", open(backup_name).read()):
-            print 'restored', obj
-            obj.save()
+        if self.dry_run:
+            print 'DRY RUN!'
+        filters = [ f.split('=') for f in self.opts.filter ] if self.opts.filter else None
+        def get_rule(obj):
+            if filters:
+                stuff = dir(obj)
+                for f in filters:
+                    if not f[0] in stuff:
+                        print 'filter attr invalid, possible values are', stuff
+                return lambda o: all([ str(getattr(o,f[0])) == f[1] for f in filters])
+            else:
+                return lambda o: True
+        applies = None
+        for obj in self._get_backup():
+            applies = applies if applies else get_rule(obj.object)
+            if applies(obj.object):
+                print 'restoring', obj.object
+                if not self.dry_run:
+                    obj.save()
 
     def _configure(self, opts, args):
         'do general config'
@@ -58,6 +86,10 @@ class ConfigMigration(object):
     def _run(self):
         'general run'
         self.init()
+        if self.opts.filter:
+            for e in self.opts.filter:
+                k,v = e.split('=')
+                self.query_set = self.query_set.filter(**{k:v})
         if self.dry_run:
             msg = 'dry run, will not make any changes'
             print '*' * len(msg)
@@ -65,7 +97,17 @@ class ConfigMigration(object):
             print '*' * len(msg)
         if not self.dry_run:
             self.do_backup()
-        self.run()
+        transaction.enter_transaction_management()
+        transaction.managed(True)
+        try:
+            self.run()
+        except:
+            print 'aborting transaction'
+            transaction.rollback()
+            raise
+        else:
+            transaction.commit()
+
 
     def process_model(self, m):
         raise Exception('implement process_model')
@@ -129,11 +171,25 @@ class RemoveMapProperties(ConfigMigration):
 class UseVirtualOWSURL(ConfigMigration):
     'update ows_url to point to virtual service'
 
-    query_set = MapLayer.objects.filter(ows_url='/geoserver/wms')
+    query_set = MapLayer.objects.exclude(ows_url__startswith='http').exclude(ows_url__isnull=True) 
 
     def process_model(self, m):
-        m.ows_url = '/geoserver/geonode/%s/wms' % m.name
-        print 'updating %s to use ows_url=%s (map=%s)' % (m.name, m.ows_url, m.map.id)
+        print 'processing %s, map=%s' % (m.name, m.map.id)
+        if m.name.find('geonode:') == 0:
+            print 'updating name to remove prefix'
+            m.name = m.name.replace('geonode:', '')
+            m.ows_url = '%sgeonode/%s/wms' % (settings.GEOSERVER_BASE_URL, m.name)
+            print 'updating ows_url=%s' % m.ows_url
+        config = json.loads(m.source_params)
+        config['id'] = 'geonode:%s-search' % m.name
+        print 'updating source_params.id to %s' % config['id']
+        m.source_params = json.dumps(config)
+        config = json.loads(m.layer_params)
+        if 'capability' in config:
+            config['capability']['prefix'] = m.name
+            config['capability']['name'] = m.name
+            print 'adjusted capability name and prefix to %s' % m.name
+            m.layer_params = json.dumps(config)
 
 
 def _migrations():
@@ -166,22 +222,31 @@ if __name__ == '__main__':
     parser.add_option('-f', '--force-backup',
         help='Overwrite any existing backup',
         action='store_true', default=False)
+    parser.add_option('-i', '--filter',
+        help='Limit the query further with provided keywords, ex. map__id=22 ',
+        action='append')
 
     args = sys.argv[1:]
     if not len(args):
         _print_help(parser)
-    help = args[0] == 'help'
+    help = 'help' in args
     if help:
-        args.pop(0)
+        args.remove('help')
         if not len(args):
             print 'help requires a migration name'
             sys.exit(1)
     migrations = dict([ (v[0].lower(),v[1]) for v in _migrations() ])
-    migration = args.pop(0)
-    if not migration.lower() in migrations:
-        print 'migration not found:', migration
+    migration_name = [ a for a in args if a[0] != '-' ]
+    migration_name = migration_name[0] if migration_name else None
+    if not migration_name:
         _print_help(parser, 1)
-    migration = migrations[migration.lower()]()
+    if not migration_name.lower() in migrations:
+        print 'migration not found:', migration_name
+        _print_help(parser, 1)
+    migration = migrations[migration_name.lower()]()
     migration.configure_options(parser)
     if help: _print_help(parser)
-    migration.main(*parser.parse_args(args))
+    try:
+        migration.main(*parser.parse_args(args))
+    except MigrationException, me:
+        print me

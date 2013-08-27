@@ -10,6 +10,8 @@ from geoserver.catalog import ConflictingDataError
 from mapstory import models
 from mapstory.util import lazy_context
 from mapstory.util import render_manual
+from mapstory.util import unicode_csv_dict_reader
+from mapstory.forms import AnnotationForm
 from mapstory.forms import CheckRegistrationForm
 from mapstory.forms import StyleUploadForm
 from mapstory.forms import LayerForm
@@ -19,26 +21,28 @@ from dialogos.models import Comment
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db.models import signals
+from django.db import transaction
 from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template import loader
+from django.template import defaultfilters as filters
 from django.contrib.contenttypes.models import ContentType
-from django.views.decorators.cache import cache_page
+
 
 from lxml import etree
-from datetime import datetime
+import csv
+import json
 import math
 import os
 import random
@@ -92,6 +96,15 @@ def manual(req):
     }))
 
 
+def _get_requested_page(req):
+    try:
+        return int(req.REQUEST.get('page',1)) if req else 1
+    except ValueError, ex:
+        if settings.DEBUG:
+            raise ex
+        return 1
+
+
 def _related_stories_pager(section=None, map_obj=None):
     if section:
         target = get_object_or_404(models.Section, slug=section)
@@ -103,12 +116,12 @@ def _related_stories_pager(section=None, map_obj=None):
 
 def _related_stories_page(req, section=None, map_obj=None):
     target, pager = _related_stories_pager(section=section, map_obj=map_obj)
-    page_num = int(req.REQUEST.get('page',1))
+    page_num = _get_requested_page(req)
     page = None
     try:
         page = pager.page(page_num)
     except EmptyPage:
-        pass
+        raise Http404()
     return target, page
 
 
@@ -138,12 +151,15 @@ def section_detail(req, section):
         'section' : sec,
         'pager' : pager
     }))
-    
+
+
 def resource_detail(req, resource):
     res = get_object_or_404(models.Resource, slug=resource)
     return render_to_response('mapstory/resource.html', RequestContext(req,{
+        'can_edit' : req.user.is_superuser,
         'resource' : res
     }))
+
 
 def get_map_carousel_maps():
     '''Get the carousel ids/thumbnail dict either
@@ -191,6 +207,10 @@ def favoriteslinks(req):
         maps = models.PublishingStatus.objects.get_in_progress(req.user,Map)
     elif layer_or_map == 'layer':
         obj = get_object_or_404(Layer, pk = id)
+        maps = None
+    # only create these links if the user is an Org
+    elif layer_or_map == 'owner' and models.Org.objects.filter(user=req.user).count():
+        obj = get_object_or_404(User, username = id)
         maps = None
     else:
         return HttpResponse('')
@@ -255,11 +275,13 @@ def layer_metadata(request, layername):
     return HttpResponseRedirect(reverse('data_detail', args=[layer.typename]))
     
 @login_required
-def favorite(req, layer_or_map, id):
-    if layer_or_map == 'map':
+def favorite(req, subject, id):
+    if subject == 'map':
         obj = get_object_or_404(Map, pk = id)
-    else:
+    elif subject == 'layer':
         obj = get_object_or_404(Layer, pk = id)
+    elif subject == 'user':
+        obj = get_object_or_404(User, pk = id)
     models.Favorite.objects.create_favorite(obj, req.user)
     return HttpResponse('OK', status=200)
 
@@ -344,12 +366,12 @@ def add_to_map(req,id,typename):
 
 def _by_storyteller_pager(req, user, what):
     if what == 'maps':
-        query = models.PublishingStatus.objects.get_public(user, Map)
+        query = models.PublishingStatus.objects.get_public(user, Map, req.user)
         exclude = req.GET.get('exclude', None) if req else None
         if exclude:
             query = query.exclude(id=exclude)
     elif what == 'layers':
-        query = models.PublishingStatus.objects.get_public(user, Layer)
+        query = models.PublishingStatus.objects.get_public(user, Layer, req.user)
         for e in settings.LAYER_EXCLUSIONS:
             query = query.exclude(name__regex=e)
     else:
@@ -377,12 +399,12 @@ def storyteller_activity_pager(req, username, what='actions'):
     user = get_object_or_404(User, username=username)
     from mapstory.templatetags.mapstory_tags import activity_item
     pager = _storyteller_activity_pager(user, what)
-    page_num = int(req.REQUEST.get('page',1)) if req else 1
+    page_num = _get_requested_page(req)
     page = None
     try:
         page = pager.page(page_num)
     except EmptyPage:
-        pass
+        raise Http404()
     link = tiles =  ''
     if page:
         show_link = what != 'actions'
@@ -394,12 +416,12 @@ def storyteller_activity_pager(req, username, what='actions'):
 def by_storyteller_pager(req, user, what):
     user = get_object_or_404(User, username=user)
     pager = _by_storyteller_pager(req, user, what)
-    page_num = int(req.REQUEST.get('page',1)) if req else 1
+    page_num = _get_requested_page(req)
     page = None
     try:
         page = pager.page(page_num)
     except EmptyPage:
-        pass
+        raise Http404()
     link = tiles = ''
     when = lambda o: o.last_modified if what == 'maps' else o.date
     if pager:
@@ -447,14 +469,153 @@ class SignupView(account.views.SignupView):
 
    form_class = CheckRegistrationForm
 
+@transaction.commit_on_success()
+def annotations(req, mapid):
+    '''management of annotations for a given mapid'''
+    #todo cleanup and break apart
+    if req.method == 'GET':
+        cols = [ f.name for f in models.Annotation._meta.fields if f.name not in ('map','the_geom') ]
+
+        mapobj = _resolve_object(req, models.Map, 'maps.view_map',
+                                 allow_owner=True, id=mapid)
+        ann = models.Annotation.objects.filter(map=mapid)
+        if bool(req.GET.get('in_map', False)):
+            ann = ann.filter(in_map=True)
+        if bool(req.GET.get('in_timeline', False)):
+            ann = ann.filter(in_timeline=True)
+        if 'page' in req.GET:
+            page = int(req.GET['page'])
+            page_size = 25
+            start = page * page_size
+            end = start + page_size
+            ann = ann[start:end]
+        if 'csv' in req.GET:
+            response = HttpResponse(mimetype='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=map-%s-annotations.csv' % mapobj.id
+            response['Content-Encoding'] = 'utf-8'
+            writer = csv.writer(response)
+            cols.remove('id')
+            writer.writerow(cols)
+            sidx = cols.index('start_time')
+            eidx = cols.index('end_time')
+            # default csv writer chokes on unicode
+            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else v
+            for a in ann:
+                vals = [ encode(getattr(a, c)) for c in cols if c not in ('start_time','end_time')]
+                vals[sidx] = a.start_time_str
+                vals[eidx] = a.end_time_str
+                writer.writerow(vals)
+            return response
+        # strip the superfluous id, it will be added at the feature level
+        props = [ c for c in cols if c != 'id' ]
+        def encoder(query_set):
+            results = []
+            for res in query_set:
+                feature = { 'id' : res.id}
+                if res.the_geom:
+                    geometry = {}
+                    geometry['type'] = res.the_geom.geom_type
+                    geometry['coordinates'] = res.the_geom.coords
+                    feature['geometry'] = geometry
+                fp = feature['properties'] = {}
+                for p in props:
+                    val = getattr(res, p)
+                    if val:
+                        fp[p] = val
+                results.append(feature)
+            return results
+
+        return json_response({'type':'FeatureCollection','features':encoder(ann)})
+
+    if req.method == 'POST':
+        mapobj = _resolve_object(req, models.Map, 'maps.change_map',
+                                 allow_owner=True, id=mapid)
+        # either a bulk upload or a JSON change
+        action = 'upsert'
+        get_props = lambda r: r
+        finish = lambda: None
+        created = []
+        form_mode = 'client'
+        content_type = None
+        overwrite = False
+        error_format = None
+
+        def id_collector(form):
+            created.append(form.instance.id)
+
+        if req.FILES:
+            fp = iter(req.FILES.values()).next()
+            # ugh, builtin csv reader chokes on unicode
+            data = unicode_csv_dict_reader(fp)
+            id_collector = lambda f: None
+            form_mode = 'csv'
+            content_type = 'text/html'
+            ids = list(models.Annotation.objects.filter(map=mapobj).values_list('id', flat=True))
+            # delete existing, we overwrite
+            finish = lambda: models.Annotation.objects.filter(id__in=ids).delete()
+            overwrite = True
+            def error_format(row_errors):
+                response = []
+                for re in row_errors:
+                    row = re[0] + 1
+                    for e in re[1]:
+                        response.append('[%s] %s : %s' % (row, e, re[1][e]))
+                return 'The following rows had problems:<ul><li>' + '</li><li>'.join(response) + "</li></ul>"
+        else:
+            data = json.loads(req.body)
+            if isinstance(data, dict):
+                action = data.get('action', action)
+            if 'features' in data:
+                data = data.get('features')
+                get_props = lambda r: r['properties']
+
+        if action == 'delete':
+            models.Annotation.objects.filter(pk__in=data['ids'], map=mapobj).delete()
+            return json_response({'success' : True})
+
+        errors = []
+        i = None
+        for i,r in enumerate(data):
+            props = get_props(r)
+            props['map'] = mapobj.id
+            ann = None
+            id = r.get('id', None)
+            if id and not overwrite:
+                ann = models.Annotation.objects.get(map=mapobj, pk=id)
+
+            # form expects everything in the props, copy geometry in
+            if 'geometry' in r:
+                props['geometry'] = r['geometry']
+            props.pop('id', None)
+            form = AnnotationForm(props, instance=ann, form_mode=form_mode)
+            if not form.is_valid():
+                errors.append((i, form.errors))
+            else:
+                form.save()
+            if id is None:
+                id_collector(form)
+        if i is None:
+            errors = [ (0, 'No data could be read')]
+        if errors:
+            body = None
+            if error_format:
+                return HttpResponse(error_format(errors), status=400)
+        else:
+            finish()
+            body = {'success' : True}
+            if created:
+                body['ids'] = created
+        return json_response(body=body, errors=errors, content_type=content_type)
+
+    return HttpResponse(status=400)
+
+
 @login_required
 def create_annotations_layer(req, mapid):
     '''Create an annotations layer with the predefined schema.
     
     @todo ugly hack - using existing view to allow this
     '''
-    from geonode.maps.views import _create_layer
-    
     mapobj = get_object_or_404(Map,pk=mapid)
     
     if req.method != 'POST':
@@ -561,6 +722,94 @@ def user_activity_api(req):
         user_activity.notification_preference = req.REQUEST['notification_preference']
         user_activity.save()
         return HttpResponse('OK')
+
+
+def org_page(req, org_slug):
+    org = get_object_or_404(models.Org, slug=org_slug)
+    content = org.orgcontent_set.filter(name='main')
+    # have to resolve using both name and typename due to 'old non-ws-prefixed' layers
+    using = models.get_maps_using_layers_of_user(org.user)
+    ctx = dict(org=org, org_content=content[0].text if content else None,
+               can_edit=req.user.is_superuser or req.user == org.user,
+               using=using
+               )
+    ctx['favs'] = models.Favorite.objects.bulk_favorite_objects(org.user)
+    resp = render_to_response('mapstory/orgs/org_page.html', RequestContext(req, ctx))
+    return resp
+
+
+def org_page_api(req, org_slug):
+    org = get_object_or_404(models.Org, slug=org_slug)
+    if not (req.user == org.user or req.user.is_superuser):
+        raise PermissionDenied()
+    val = req.POST.get('banner_image', None)
+    if val is not None:
+        org.banner_image = val
+        org.save()
+        return HttpResponse(val)
+    val = req.POST.get('org_content', None)
+    if val is not None:
+        cnt, _ = org.orgcontent_set.get_or_create(name='main')
+        cnt.text = val
+        cnt.save()
+        val = filters.escape(val)
+        val = filters.urlize(val)
+        val = filters.linebreaks(val)
+        return HttpResponse(val)
+    return HttpResponse("Invalid Request", status=400)
+
+
+def org_links(req, org_slug, link_type='links'):
+    org = get_object_or_404(models.Org, slug=org_slug)
+    if not (req.user == org.user or req.user.is_superuser):
+        raise PermissionDenied()
+    return _process_links(req, org, 'mapstory/orgs/org_links.html', link_type)
+
+
+def user_links(req, link_type='links'):
+    user = req.user
+    if not (user.is_authenticated() or user.is_superuser):
+        raise PermissionDenied()
+    return _process_links(req, user.get_profile(), 'profiles/edit_links.html',
+                          link_type)
+
+
+def resource_links(req, resource, link_type='links'):
+    res = get_object_or_404(models.Resource, slug=resource)
+    if not req.user.is_superuser:
+        raise PermissionDenied()
+    return _process_links(req, res, 'mapstory/resource_links.html', link_type)
+
+
+def _process_links(req, instance, template, link_type):
+    error = ''
+    m2m = getattr(instance, link_type)
+    if req.method == 'POST':
+        if req.POST['id']:
+            # before updating, make sure the object owns the link
+            # will raise if not
+            link = m2m.get(id = req.POST['id'])
+        else:
+            link = models.Link()
+        if 'delete' in req.POST:
+            link.delete()
+        else:
+            fields = ('name', 'href')
+            if not all([req.POST[f] for f in fields]):
+                error = 'Name and URL are required'
+            else:
+                fields += ('order',)
+                for k,v in [ (f, req.POST[f]) for f in fields]:
+                    if v: setattr(link, k, v)
+                link.save()
+                m2m.add(link)
+    ctx = {
+        'links' : m2m.all().order_by('order'),
+        'link_type' : link_type,
+        'obj' : instance,
+        'error' : error
+    }
+    return render_to_response(template, RequestContext(req, ctx))
 
 
 def layer_xml_metadata(req, layer_id):

@@ -44,6 +44,21 @@ section {
     background: none;
 }
 
+#AskbotAskButton {
+    display: inline;
+    outline: none;
+    float: left;
+}
+
+/** fixes for scrollbar **/
+#AskbotAskWidget1 div {
+    height: 530px !important;
+}
+#AskbotAskWidget1 iframe {
+    border: none;
+    height: 510px !important;
+}
+
 .actnot {
     float: left;
     padding-left: 20px;
@@ -1285,6 +1300,7 @@ section.box a.read-more:hover, a.read-more:hover {
 section.box .article-list {
   overflow-y:auto;
   max-height:330px;
+  min-height:330px;
 }
 
 section.box .article-list article {
@@ -2170,4 +2186,8 @@ h2.icn-storylayer span, h2.icn-mapstory span {
 .edit-profile form .form textarea {
     width: 80%;
     resize: both;
+}
+
+.icon-orange {
+  background-image: url("../bootstrap/img/glyphicons-halflings-orange.png");
 }

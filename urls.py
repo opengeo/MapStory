@@ -2,6 +2,8 @@ from django.conf.urls.defaults import *
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core import urlresolvers
+from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.views.generic.simple import direct_to_template
 from django.views.generic import RedirectView
 from geonode.sitemap import LayerSitemap, MapSitemap
@@ -10,11 +12,15 @@ from mapstory.forms import ProfileForm
 from mapstory.views import SignupView
 from hitcount.views import update_hit_count_ajax
 from account.views import ConfirmEmailView
+from account.views import LoginView
+from account.views import LogoutView
+
+import hmac
+import hashlib
 
 # load our social signals
 from mapstory import social_signals
 
-# Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
 
@@ -32,6 +38,36 @@ sitemaps = {
     "layer": LayerSitemap,
     "map": MapSitemap
 }
+
+
+# hack login/logout to set cookies for the warper
+# this will only work if the site is running on mapstory.org
+class WarperCookieLogin(LoginView):
+    def post(self, *args, **kwargs):
+        super(WarperCookieLogin, self).post(*args, **kwargs)
+        if self.request.user.is_authenticated():
+            return HttpResponse(status=200)
+        return HttpResponse(
+                    content="invalid login",
+                    status=400,
+                    mimetype="text/plain"
+                )
+
+    def form_valid(self, form):
+        resp = super(WarperCookieLogin, self).form_valid(form)
+        key = getattr(settings, 'WARPER_KEY', 'abc123')
+        digested = hmac.new(key, form.user.username, hashlib.sha1).hexdigest()
+        cookie = '%s:%s' % (form.user.username, digested)
+        resp.set_cookie('msid', cookie, domain='warper.mapstory.org', httponly=True)
+        return resp
+
+
+class WarperCookieLogout(LogoutView):
+    def post(self, *args, **kwargs):
+        resp = super(WarperCookieLogout, self).post(self, *args, **kwargs)
+        resp.delete_cookie('msid', domain='warper.mapstory.org')
+        return resp
+
 
 class NamedRedirect(RedirectView):
     name = None
@@ -58,6 +94,11 @@ urlpatterns = patterns('',
     ('^profiles/create/$', 'profiles.views.create_profile', {'form_class': ProfileForm,}),
     # and redirect the profile list
     url('^profiles/$', NamedRedirect.as_view(name='search_owners')),
+
+    # alias these for compat with security from geonode2
+    url('^layers/acls$', 'geonode.maps.views.layer_acls'),
+    url('^layers/resolve_user$', 'geonode.maps.views.user_name'),
+
 )
 
 urlpatterns += patterns('mapstory.views',
@@ -65,11 +106,16 @@ urlpatterns += patterns('mapstory.views',
 
     # ugh, overrides
     # for the account views - we are only using these
+    url(r"^accounts/ajax_login", WarperCookieLogin.as_view(), name="account_login"),
+    url(r"^accounts/logout", WarperCookieLogout.as_view(), name="account_logout"),
     url(r"^account/confirm_email/(?P<key>\w+)/$", ConfirmEmailView.as_view(), name="account_confirm_email"),
     url(r"^account/signup/$", SignupView.as_view(), name="account_signup"),
     # and this from geonode
     url(r'^data/(?P<layername>[^/]*)/metadata$', 'layer_metadata', name="layer_metadata"),
-
+    # and to make url kinda sane
+    url(r'^profiles/edit/links$', 'user_links', name='user_links'),
+    url(r'^profiles/edit/ribbon$', 'user_links', {'link_type' : 'ribbon_links'}, name='user_ribbon_links'),
+    
     # redirect some common geonode stuff
     url(r'^data/$', NamedRedirect.as_view(name='search_layers'), name='data_home'),
     url(r'^maps/$', NamedRedirect.as_view(name='search_maps', not_post=True), name='maps_home'),
@@ -114,14 +160,19 @@ urlpatterns += patterns('mapstory.views',
     url(r'^mapstory/topics/(?P<layer_or_map>\w+)/(?P<layer_or_map_id>\d+)$','topics_api',name='topics_api'),
     url(r'^mapstory/comment/(?P<layer_or_map_id>\d+)/(?P<comment_id>\d+)$','delete_story_comment',name='delete_story_comment'),
     url(r'^mapstory/flag_comment$','flag_comment',name='flag_comment'),
-    url(r'^favorite/map/(?P<id>\d+)$','favorite',{'layer_or_map':'map'}, name='add_favorite_map'),
-    url(r'^favorite/layer/(?P<id>\d+)$','favorite',{'layer_or_map':'layer'}, name='add_favorite_layer'),
+    url(r'^favorite/map/(?P<id>\d+)$','favorite',{'subject':'map'}, name='add_favorite_map'),
+    url(r'^favorite/layer/(?P<id>\d+)$','favorite',{'subject':'layer'}, name='add_favorite_layer'),
+    url(r'^favorite/user/(?P<id>\d+)$','favorite',{'subject':'user'}, name='add_favorite_user'),
     url(r'^favorite/(?P<id>\d+)/delete$','delete_favorite',name='delete_favorite'),
     url(r'^mapstory/publish/(?P<layer_or_map>\w+)/(?P<layer_or_map_id>\d+)$','publish_status',name='publish_status'),
     url(r'^mapstory/add-to-map/(?P<id>\d+)/(?P<typename>[:\w]+)','add_to_map',name='add_to_map'),
     url(r'^search/favoriteslinks$','favoriteslinks',name='favoriteslinks'),
     url(r'^search/favoriteslist$','favoriteslist',name='favoriteslist'),
     url(r'^email/test$','render_email',name='render_email'),
+
+    url(r'^mapstory/resource/(?P<resource>[-\w]+)/links', 'resource_links', name='resource_links'),
+    url(r'^mapstory/resource/(?P<resource>[-\w]+)/ribbon', 'resource_links', {'link_type' : 'ribbon_links'}, name='resource_ribbon_links'),
+    url(r'^maps/(?P<mapid>\d+)/annotations$','annotations',name='annotations'),
 
     url(r'^ajax/hitcount/$', update_hit_count_ajax, name='hitcount_update_ajax'),
 
@@ -143,7 +194,12 @@ urlpatterns += patterns('mapstory.views',
         "extra_context" : {'html':'mapstory/thoughts/jg.html'}}, name="thoughts-jg"),
     url(r"^mapstory/thoughts/jen-ziemke/$", direct_to_template, {"template": "mapstory/thoughts.html",
         "extra_context" : {'html':'mapstory/thoughts/jz.html'}}, name="thoughts-jz"),
-
+    
+    # the catchall
+    url(r'^(?P<org_slug>[-\w]+)/$', 'org_page', name='org_page'),
+    url(r'^(?P<org_slug>[-\w]+)/api$', 'org_page_api', name='org_page_api'),
+    url(r'^(?P<org_slug>[-\w]+)/ribbon$', 'org_links', {'link_type' : 'ribbon_links'}, name='org_ribbon_links'),
+    url(r'^(?P<org_slug>[-\w]+)/links$', 'org_links', name='org_links'),
 )
 
 urlpatterns += proxy_urlpatterns
@@ -160,8 +216,9 @@ if settings.SERVE_MEDIA:
         url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {
             'document_root': settings.MEDIA_ROOT,
         }),
-        url(r'^static/(?P<path>.*)$', 'django.views.static.serve', {
-            'document_root': settings.STATIC_ROOT,
+        # this is here to allow testing staticfiles, don't remove (ian)
+        url(r'^static/(?P<path>.*)$','django.views.static.serve',{
+            'document_root' : settings.STATIC_ROOT,
         }),
         url(r'^thumbs/(?P<path>.*)$','django.views.static.serve',{
             'document_root' : settings.THUMBNAIL_STORAGE,
