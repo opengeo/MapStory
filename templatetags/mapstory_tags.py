@@ -485,6 +485,10 @@ def ext_url(cat, name):
 
 
 @register.simple_tag
+def ext_url(cat, name):
+    return resolve_link(cat, name)
+
+@register.simple_tag
 def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
     # if not provided, title could resolve to a defined title at some point
     url = resolve_link(cat, name)
