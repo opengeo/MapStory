@@ -495,12 +495,12 @@ def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
     classes = ' class="%s"' % classes if classes else ''
     title = ' title="%s"' % title if title else ''
     rel = ' rel="%s"' % rel if rel else ''
-    extra = ' '.join(['%s="%s"' % i for i in kw.items()])
+    extra = ''.join([' %s="%s"' % i for i in kw.items()])
     return '<a href="%s"%s%s%s%s>%s</a>' % (url, classes, rel,  title, extra, text)
 
 @register.simple_tag
 def wiki_link(name, text='', title='', classes='', rel = ''):
-    return ext_link('wiki', name, text=text, classes=classes, rel=rel,  title=title, target='_')
+    return ext_link('wiki', name, text=text, classes=classes, rel=rel, title=title, target='_blank')
     
 @register.simple_tag
 def wiki_help_link(name, text='', title='Learn More', classes='', rel = ''):
