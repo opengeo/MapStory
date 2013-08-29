@@ -31,15 +31,3 @@ for cat in links.values():
 def resolve_link(cat, name):
     cat = links[cat]
     return cat['links'][name]
-
-def check_link_rot():
-    for key in cat['links']:
-        url = cat['links'][key]
-        try:
-            connection = urllib2.urlopen(url)
-            print "OK: %s" % url
-            connection.close()
-        except urllib2.HTTPError, e :
-            print "ERROR: %s %s" % (url, e.getcode())
-
-        
