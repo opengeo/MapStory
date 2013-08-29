@@ -526,6 +526,12 @@ class LinkTest(TestCase):
         link = mapstory_tags.ext_link('wiki', 'curation_guide_ratings',
             classes='blah')
         self.assertEqual('<a href="http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings" class="blah"></a>', link)
+        link = mapstory_tags.wiki_link('curation_guide_ratings',
+            classes='blah')
+        self.assertEqual('<a href="http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings" class="blah" target="_blank"></a>', link)
+        link = mapstory_tags.wiki_help_link('curation_guide_ratings',
+            classes='blah')
+        self.assertEqual('<a href="http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings" class="icon-question-sign icon-orange blah" title="Learn More" target="_blank"></a>', link)
 
     def test_verify_links(self):
         from mapstory.links import links
