@@ -64,7 +64,6 @@ def send_user_welcome(user):
     WELCOME_EMAIL_HTML = loader.get_template('account/email/welcome_message.html')
     site_prefix = settings.SITEURL
     if site_prefix[-1] == '/': site_prefix = site_prefix[:-1]
-    print site_prefix
     c = Context({'user': user, 'site_prefix': site_prefix})
     _logger.info('sending welcome message to %s', user.email)
     send_html_mail("[MapStory] Welcome To MapStory",
