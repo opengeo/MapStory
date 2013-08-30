@@ -3,7 +3,6 @@
 {% load geonode_auth %}
 {% load mapstory_tags %}
 {% load dialogos_tags %}
-{% load flag_tags %}
 {% load agon_ratings_tags %}
 {% load staticfiles %}
 
@@ -216,8 +215,7 @@
                             {% include "maps/_sharethis_links.html" %}
                         </div>
                         <div class="tab-pane flag" id="actions4">
-                            Flag this as inappropriate, broken, or otherwise.
-                            {% flag layer "owner" %}
+                            {% flag_widget layer %}
                         </div>
                         <div class="tab-pane" id="actions5">
                             {% if user.is_authenticated %}
@@ -361,6 +359,7 @@
 {% block extra_body %}
 {% if request.user.is_authenticated %}
 	{% user_rating_js request.user layer "layer" %}
+    <script src="{% static "script/flag_helper.js" %}"></script>
 {% else %}
 	<script src="{% static "agon_ratings/js/jquery.raty.js" %}"></script>
 {% endif %}

@@ -488,6 +488,7 @@ def ext_url(cat, name):
 def ext_url(cat, name):
     return resolve_link(cat, name)
 
+
 @register.simple_tag
 def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
     # if not provided, title could resolve to a defined title at some point
@@ -498,9 +499,22 @@ def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
     extra = ''.join([' %s="%s"' % i for i in kw.items()])
     return '<a href="%s"%s%s%s%s>%s</a>' % (url, classes, rel,  title, extra, text)
 
+
 @register.simple_tag
 def wiki_link(name, text='', title='', classes='', rel = ''):
     return ext_link('wiki', name, text=text, classes=classes, rel=rel, title=title, target='_blank')
+
+
+@register.simple_tag
+def wiki_help_link(name, text='', title='Learn More', classes=''):
+    classes = 'icon-question-sign icon-orange ' + classes
+    return ext_link('wiki', name, text=text, classes=classes, title=title, target='_')
+
+
+@register.inclusion_tag('maps/_widget_flag.html', takes_context=True)
+def flag_widget(context, flag_object):
+    return { 'flag_object': flag_object, 'request': context['request'] }
+
     
 @register.simple_tag
 def wiki_help_link(name, text='', title='Learn More', classes='', rel = ''):

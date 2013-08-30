@@ -1,10 +1,11 @@
-import urllib2
-
 links = {
     "wiki" : {
         "prefix" : "http://wiki.mapstory.org/index.php?title=",
         "links" : [
             ("curation_guide_ratings", "Curation_Guide#Ratings"),
+            ("curation_guide_flag_broken", "Curation_Guide#Flagging_Content_as_Broken"),
+            ("curation_guide_flag_inappropriate", "Curation_Guide#Flagging_Content_as_Inappropriate"),
+            ("curation_guide_flag_inaccurate", "Curation_Guide#Flagging_Content_as_Inaccurate"),
             ("curation_guide_title", "Curation_Guide#Title"),
             ("curation_guide_keywords", "Curation_Guide#Keywords"),
             ("curation_guide_abstract", "Curation_Guide#Abstract"),
