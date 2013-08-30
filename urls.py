@@ -168,7 +168,6 @@ urlpatterns += patterns('mapstory.views',
     url(r'^mapstory/add-to-map/(?P<id>\d+)/(?P<typename>[:\w]+)','add_to_map',name='add_to_map'),
     url(r'^search/favoriteslinks$','favoriteslinks',name='favoriteslinks'),
     url(r'^search/favoriteslist$','favoriteslist',name='favoriteslist'),
-    url(r'^email/test$','render_email',name='render_email'),
 
     url(r'^mapstory/resource/(?P<resource>[-\w]+)/links', 'resource_links', name='resource_links'),
     url(r'^mapstory/resource/(?P<resource>[-\w]+)/ribbon', 'resource_links', {'link_type' : 'ribbon_links'}, name='resource_ribbon_links'),
@@ -201,6 +200,11 @@ urlpatterns += patterns('mapstory.views',
     url(r'^(?P<org_slug>[-\w]+)/ribbon$', 'org_links', {'link_type' : 'ribbon_links'}, name='org_ribbon_links'),
     url(r'^(?P<org_slug>[-\w]+)/links$', 'org_links', name='org_links'),
 )
+
+if settings.DEBUG:
+    urlpatterns += patterns('mapstory.views',
+        url(r'^email/test$','render_email',name='render_email'),
+    )
 
 urlpatterns += proxy_urlpatterns
 

@@ -844,4 +844,4 @@ def render_email(request):
         mime = "text/plain"
     else:
         mime = "text/html"
-    return render_to_response(t, RequestContext(request,{'user': {'first_name': 'FIRST NAME'}}), mimetype=mime)
+    return render_to_response(t, {'user': {'first_name': 'FIRST NAME'}}, mimetype=mime)
