@@ -69,7 +69,7 @@ def send_user_welcome(user):
     send_html_mail("[MapStory] Welcome To MapStory",
                    message=WELCOME_EMAIL_TXT.render(c),
                    message_html=WELCOME_EMAIL_HTML.render(c),
-                   from_email="do-not-reply@mapstory.org", 
+                   from_email="hello@mapstory.org",
                    recipient_list=[user.email])
 
 
