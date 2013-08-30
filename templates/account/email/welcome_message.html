@@ -128,7 +128,7 @@
                             <tr>
                                 <td  valign="top">
                                     <div id="content">
-                                    <img src="{% static "mail/mapstorylogo.gif" %}" />
+                                    <img src="{{ site_prefix }}{% static "mail/mapstorylogo.gif" %}" />
                                     <h2>Welcome to the MapStory community!</h2>
 
                                     <p>Hi, {% firstof user.first_name user.username %}!</p>

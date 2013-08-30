@@ -24,6 +24,7 @@ from dialogos.models import Comment
 from mailer import engine as email_engine
 
 from datetime import timedelta
+from datetime import datetime
 import json
 import logging
 import re
@@ -186,6 +187,34 @@ class SocialTest(TestCase):
         self.assertEqual('1', re.search('\d', messages[1].getMessage()).group())
 
         logger.removeHandler(handler)
+
+    def test_welcome_mail_content(self):
+        social_signals.send_user_welcome(self.bobby)
+        mail = self.drain_mail_queue()
+        self.assertEqual(1, len(mail))
+        email = mail[0] # mailer.models.Message
+        message = email.email # django.core.mail.message.EmailMultiAlternatives
+        self.assertTrue('Hi, bobby!' in message.body)
+        self.assertEqual(1, len(message.alternatives))
+        content, mime_type = message.alternatives[0]
+        self.assertEqual('text/html', mime_type)
+        self.assertTrue('<img src="http://localhost:8000/static/mail/mapstorylogo.gif" />' in content)
+        self.assertTrue('<p>Hi, bobby!</p>' in content)
+
+    def test_welcome_mail_users(self):
+        date_days_ago = lambda d,h=0: datetime.now() - timedelta(days=d, hours=h)
+        User.objects.create(username='day3', date_joined=date_days_ago(3),
+                                   email='a@b.c')
+        User.objects.create(username='day1_5', date_joined=date_days_ago(1,12),
+                                   email='c@d.e')
+        self.drain_mail_queue()
+        social_signals.daily_user_welcomes()
+        mail = self.drain_mail_queue()
+        # we're expecting a single mail to day1_5,
+        # day3 is too old, bobby and others are too recent
+        self.assertEqual(1, len(mail))
+        email = mail[0]
+        self.assertEqual('c@d.e', email.to_addresses[0])
 
 
 def comment_on(obj, user, comment, reply_to=None):

@@ -47,26 +47,32 @@ def batch_notification(days=1):
                        from_email="do-not-reply@mapstory.org", 
                        recipient_list=[u.email])
 
+
 def daily_user_welcomes():
     oneday = datetime.timedelta(days=1)
     endtime = datetime.datetime.now() - oneday
     starttime = endtime - oneday
     users = User.objects.filter(date_joined__lte = endtime)
-    users.filter(date_joined__gt = starttime)
+    users = users.filter(date_joined__gt = starttime)
     for user in users:
         send_user_welcome(user)
 
-WELCOME_EMAIL_TXT = loader.get_template('mapstory/welcome_message.txt')
-WELCOME_EMAIL_HTML = loader.get_template('mapstory/welcome_message.html')
 
 def send_user_welcome(user):
-    c = Context({'user': user}) # in case we want to template the user name 
+    from django.conf import settings # circular deps
+    WELCOME_EMAIL_TXT = loader.get_template('account/email/welcome_message.txt')
+    WELCOME_EMAIL_HTML = loader.get_template('account/email/welcome_message.html')
+    site_prefix = settings.SITEURL
+    if site_prefix[-1] == '/': site_prefix = site_prefix[:-1]
+    print site_prefix
+    c = Context({'user': user, 'site_prefix': site_prefix})
     _logger.info('sending welcome message to %s', user.email)
     send_html_mail("[MapStory] Welcome To MapStory",
                    message=WELCOME_EMAIL_TXT.render(c),
                    message_html=WELCOME_EMAIL_HTML.render(c),
                    from_email="do-not-reply@mapstory.org", 
                    recipient_list=[user.email])
+
 
 def notify_handler(sender, instance, action, model, pk_set, **kwargs):
     if action != 'post_add': return
