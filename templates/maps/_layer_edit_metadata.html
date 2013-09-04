@@ -50,11 +50,7 @@
 <hr/>
 {% topic_selection layer %}
 <hr/>
-<img class="thumbnail" style="float:right" src="{{ layer.get_thumbnail_url }}">
-<p>Generate a thumbnail for this StoryLayer</p>
-<a id="set_thumbnail" class="btn" href="#thumbnail">{% trans "Set thumbnail" %}</a>
-{% warn_missing_thumb layer %}
-<div class="clearfix"></div>
+{% thumbnail_widget layer %}
 <hr/>
 {% publish_status layer %}
 <p id="meta_data_status" style="display:none" class="alert alert-warning mrg-top">

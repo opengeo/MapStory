@@ -421,11 +421,12 @@ def warn_status(req, obj):
         return loader.render_to_string('maps/_warn_status.html', {})
     return ""
 
-@register.simple_tag
-def warn_missing_thumb(obj):
-    if not obj.get_thumbnail():
-        return loader.render_to_string('maps/_warn_thumbnail.html', {})
-    return ""
+
+@register.inclusion_tag('maps/_widget_thumbnail.html')
+def thumbnail_widget(obj):
+    obj.display_name = 'StoryLayer' if isinstance(obj, Layer) else 'MapStory'
+    return { 'obj': obj }
+
 
 @register.simple_tag
 def user_activity_email_prefs(user):

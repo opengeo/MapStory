@@ -150,10 +150,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                             <hr/>
                             {% topic_selection map %}
                             <hr/>
-                            <img class="thumbnail" style="float:right" src="{{ map.get_thumbnail_url }}">
-                            <p>Generate a thumbnail for this MapStory</p>
-                            <a id="set_thumbnail" class="btn" href="#thumbnail">{% trans "Set thumbnail" %}</a>
-                            <div class="clearfix"></div>
+                            {% thumbnail_widget map %}
                             <hr/>
                             {% publish_status map %}
                             <p id="meta_data_status" style="display:none" class="alert alert-warning mrg-top" >
