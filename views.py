@@ -442,6 +442,7 @@ def flag_comment(req):
         'object_id' : req.GET['id'],
         'content_type' : ct.id,
         'creator_field' : 'author',
+        'flag_type' : 'inappropriate'
     }))
     
 @login_required

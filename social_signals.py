@@ -1,5 +1,6 @@
 from django.db.models.signals import post_save
 from django.db.models.signals import m2m_changed
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.template import loader
@@ -44,7 +45,7 @@ def batch_notification(days=1):
         send_html_mail("[MapStory] Daily Summary Notification",
                        message=activity_summary(actions, plain_text=True),
                        message_html=activity_summary(actions),
-                       from_email="do-not-reply@mapstory.org", 
+                       from_email="do-not-reply@mapstory.org",
                        recipient_list=[u.email])
 
 
@@ -79,12 +80,12 @@ def notify_handler(sender, instance, action, model, pk_set, **kwargs):
         return
     assert len(pk_set) == 1
     real_action = getattr(model,'objects').get(id=iter(pk_set).next())
-    send_html_mail("[MapStory] Notification", 
+    send_html_mail("[MapStory] Notification",
                    message=mapstory_tags.activity_item(real_action, plain_text=True),
                    message_html=mapstory_tags.activity_item(real_action),
-                   from_email="do-not-reply@mapstory.org", 
+                   from_email="do-not-reply@mapstory.org",
                    recipient_list=[instance.user.email])
-    
+
 
 def action(actor, verb, action_object=None, target=None, public=True):
     '''using the signal api doesn't give us a ref to the new action...'''
@@ -168,7 +169,7 @@ def comment_handler(sender, instance, created, **kwargs):
         act = action(actor, verb='edited', action_object=instance, target=target)
 
     # track this activity - too expensive to query this out after the fact
-    # only track if the comment is 
+    # only track if the comment is
     # a) on someone elses layer/map or
     if actor != target.owner:
         target.owner.useractivity.other_actor_actions.add(act)
@@ -198,7 +199,7 @@ def map_handler(sender, what_changed, old, new, **kw):
         added = old ^ new
         layers = Layer.objects.filter(typename__in=added)
         for l in layers:
-            act = action(sender.owner, verb='added', action_object=l, 
+            act = action(sender.owner, verb='added', action_object=l,
                          target=sender)
             # if the layer owner is not the map owner, tell the layer owner
             if l.owner != sender.owner:
@@ -206,17 +207,27 @@ def map_handler(sender, what_changed, old, new, **kw):
 
 
 def flag_handler(flagged_instance, flagged_content, **kw):
+    from django.conf import settings # circular deps
     target = flagged_content.content_object
-    get_absolute_url = getattr(target, 'get_absolute_url', None)
-    recps = User.objects.filter(is_staff=True).exclude(email='').exclude(email__isnull=True)
-    link = get_absolute_url() if get_absolute_url else ''
+    has_email = User.objects.exclude(email='').exclude(email__isnull=True)
+    q = Q(is_superuser=True)
+    if flagged_instance.flag_type == 'inappropriate':
+        q = q | Q(groups__name='content_moderator')
+    if flagged_instance.flag_type == 'broken':
+        q = q | Q(groups__name='dev_moderator')
+    recps = has_email.filter(q)
+    link = settings.SITEURL + '/admin/flag/flaginstance/%s' % flagged_instance.pk
     message = loader.render_to_string("flag/email.txt", {
         'flag' : flagged_instance,
         'url' : link,
         'display' : '%s[%s]' % (target._meta.object_name, target.id)
     })
-    for u in recps:
-        u.email_user('mapstory flagged content', message)
+    send_html_mail("[MapStory] Notification",
+                   message=message,
+                   message_html=message,
+                   from_email="do-not-reply@mapstory.org",
+                   recipient_list=[u.email for u in recps])
+
 
 def get_user_avatar(backend, details, response, social_user, uid,\
                     user, *args, **kwargs):
