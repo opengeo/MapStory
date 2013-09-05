@@ -17,7 +17,6 @@ $(function() {
     }).on("click","a.r",function() {
         var el = $(this);
         $.get(el.attr('href'),function(data) {
-            //$("#comment_modal .modal-body").html(data).parent().modal('show').find('textarea').focus();
             $("#comment_modal .modal-body").html(data);
             var parentId = $('input#id_parent').val()
             var target = "#comment-" + parentId +" .comment_content p";
