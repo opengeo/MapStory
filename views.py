@@ -673,23 +673,29 @@ def upload_style(req):
     if len(el) == 0 and not data.get('name'):
         return respond(errors="Please provide a name, unable to extract one from the SLD.")
     name = data.get('name') or el[0].text
-    if data['update']:
-        match = None
+
+    def find_style(name):
         styles = list(layer.styles) + [layer.default_style]
         for style in styles:
             if style.sld_name == name:
-                match = style; break
+                return style
+
+    cat = Layer.objects.gs_catalog
+    if data['update']:
+        match = find_style(name)
         if match is None:
-            return respond(errors="Cannot locate style : " + name)
+            if cat.get_style(name) is not None:
+                return respond(errors="""A style with this name is used by another layer.
+                         Please choose a different name.""")
+            return respond(errors="Cannot locate the existing style to update : " + name)
         match.update_body(sld)
     else:
         try:
-            cat = Layer.objects.gs_catalog
             cat.create_style(name, sld)
             layer.styles = layer.styles + [ type('style',(object,),{'name' : name}) ]
             cat.save(layer.publishing)
         except ConflictingDataError,e:
-            return respond(errors="""A layer with this name exists. Select
+            return respond(errors="""A style with this name exists. Select
                                      the update option if you want to update.""")
     return respond(body={'success':True,'style':name,'updated':data['update']})
 

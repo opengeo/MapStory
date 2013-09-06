@@ -242,7 +242,7 @@
                             <hr>
                             <h4>Or The Styles This StoryLayer Uses:</h4>
                             <span class="styles-list">
-                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download {{layer.publishing.default_style.name}}</a><br/>
+                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download {{layer.default_style.name}}</a><br/>
                                 {% for style in layer.styles %} 
                                     <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download
                                     {% if style.sld_title %}
@@ -267,8 +267,8 @@
                             {% else %}
                             <div id="style-preview" class="styles-list">
                                 <h4>Change Style (Preview)</h4>
-                                <input type="radio" name="style" id="{{layer.publishing.default_style.name}}" value="{{layer.publishing.default_style.name}}" checked="checked"/>
-                                <label for="{{layer.publishing.default_style.name}}" class="style-title">
+                                <input type="radio" name="style" id="{{layer.default_style.name}}" value="{{layer.default_style.name}}" checked="checked"/>
+                                <label for="{{layer.default_style.name}}" class="style-title">
                                 {% if layer.default_style.sld_title %}
                                 {{ layer.default_style.sld_title }}
                                 {% else %}
@@ -291,8 +291,8 @@
                             <hr>
                             <h4>Set Default Style</h4>
                             <select name="default-style">
-                            <option value="{{layer.publishing.default_style.name}}" selected="selected">
-                              {{layer.publishing.default_style.name|title}}
+                            <option value="{{layer.default_style.name}}" selected="selected">
+                              {{layer.default_style.name|title}}
                             </option>
                             {% for style in layer.styles %} 
                                 <option value="{{style.name}}"> {{ style.name|title }} </option>
