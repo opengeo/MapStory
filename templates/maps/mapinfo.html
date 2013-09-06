@@ -195,6 +195,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                         <div class="tab-pane" id="actions5">
                             {% if user.is_authenticated %}
                             {% add_to_favorites map %}
+                            <div id="add-to-feedback">&nbsp;</div>
                             {% else %}
                             <p>Login to add to your favorites list.</p>
                             {% endif %}

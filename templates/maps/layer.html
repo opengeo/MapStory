@@ -195,7 +195,6 @@
                             {% if can_change %}
                             <li><a href="#actions7" class="icn layers" data-toggle="pill">Style</a></li>
                             {% endif %}
-<!--                            <a href="#" class="icn favorites">Add to Favorites</a>-->
                             <li><a href="#actions3" class="icn share" data-toggle="pill">Share</a></li>
                             <li><a href="#actions4" class="icn flag" data-toggle="pill">Flag</a></li>
                             <li><a href="#actions5" class="icn add" data-toggle="pill">Add</a></li>
@@ -221,6 +220,7 @@
                             {% if user.is_authenticated %}
                             {% add_to_favorites layer %}
                             {% add_to_map layer %}
+                            <div id="add-to-feedback">&nbsp;</div>
                             {% else %}
                             <p>Login to add to your favorites list.</p>
                             {% endif %}

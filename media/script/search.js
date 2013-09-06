@@ -181,7 +181,18 @@ Ext.onReady(function() {
             success: function(resp, opts) {
                 Ext.get('favorites').dom.innerHTML = resp.responseText;
             }
-        })
+        });
+    }
+
+    function addToFeedback(el) {
+        if (el.parent('.dropdown-menu') != null) {
+            el = el.parent('ul').prev();
+        }
+        var feedback = Ext.get(Ext.DomHelper.append(el.parent('.actions'), {
+            tag : 'span', html:'Successfully Added'
+        }));
+        feedback.setLocation(el.getRight() + 20, el.getTop());
+        feedback.hide().slideIn('l').frame().slideOut("l", { remove: true});
     }
     
     function enablePostButton(selector, callback) {
@@ -190,8 +201,11 @@ Ext.onReady(function() {
             Ext.Ajax.request({
                 url: this.getAttribute('href'),
                 method: 'POST',
-                success: callback
-            })
+                success: function(resp, opts) {
+                    callback(resp, opts);
+                    addToFeedback(Ext.select(selector).item(0));
+                }
+            });
         });
     }
 

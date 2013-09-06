@@ -235,27 +235,14 @@ def add_to_favorites(obj):
     return template % (url,text)
 
 
-@register.tag
-def add_to_map(parse, token):
-    try:
-        tokens = token.split_contents()
-        tag_name = tokens.pop(0)
-        obj_name = tokens.pop(0)
-    except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
-    return AddToMapNode(obj_name)
-
-class AddToMapNode(template.Node):
-    def __init__(self,obj_name):
-        self.obj_name = obj_name
-    def render(self, context):
-        layer = context[self.obj_name]
-        user = context['user']
-        template_name = 'mapstory/_widget_add_to_map.html'
-        return loader.render_to_string(template_name,{
-            'maps' : PublishingStatus.objects.get_in_progress(user,Map), # user.map_set.all()
-            'layer' : layer
-        })
+@register.simple_tag(takes_context=True)
+def add_to_map(context, layer):
+    user = context['user']
+    template_name = 'mapstory/_widget_add_to_map.html'
+    return loader.render_to_string(template_name,{
+        'maps' : PublishingStatus.objects.get_in_progress(user,Map),
+        'layer' : layer
+    })
 
 
 @register.simple_tag
