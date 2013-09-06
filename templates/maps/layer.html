@@ -242,9 +242,9 @@
                             <hr>
                             <h4>Or The Styles This StoryLayer Uses:</h4>
                             <span class="styles-list">
-                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download {{layer.default_style.name}}</a><br/>
+                                <a download="{{ layer.default_style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download {{layer.default_style.name}}</a><br/>
                                 {% for style in layer.styles %} 
-                                    <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download
+                                    <a download="{{ style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download
                                     {% if style.sld_title %}
                                         {{ style.sld_title }}
                                      {% else %}
@@ -275,7 +275,7 @@
                                 {{ layer.default_style.name|title }}
                                 {% endif %}
                                 </label>
-                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download SLD</a><br/>
+                                <a download="{{ layer.default_style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download SLD</a><br/>
                                 {% for style in layer.styles %} 
                                 <input type="radio" name="style" id="{{style.name}}" value="{{style.name}}"/>
                                 <label for="{{style.name}}" class="style-title">
@@ -285,7 +285,7 @@
                                 {{ style.name|title }}
                                 {% endif %}
                                 </label>
-                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download SLD</a><br/>
+                                <a download="{{ style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download SLD</a><br/>
                                 {% endfor %}
                             </div>
                             <hr>
