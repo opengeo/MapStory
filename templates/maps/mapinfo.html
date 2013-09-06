@@ -147,7 +147,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                             <label>Keywords:</label>
                             <textarea name="map-keywords">{{map.keyword_list|join:" "}}</textarea>
                             <label>Abstract:</label>
-                            <textarea name="map-abstract">{{map.abstract}}</textarea>
+                            <textarea rows="8" name="map-abstract">{{map.abstract}}</textarea>
                             <div>
                                 <button class="btn" id="submit">Update Information</button>
                             </div>
