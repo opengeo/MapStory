@@ -148,6 +148,32 @@ class OrgContentAdmin(admin.ModelAdmin):
     pass
 
 
+class EssayForm(forms.ModelForm):
+    class Meta:
+        exclude = ('slug', )
+
+    def clean(self):
+        cleaned_data = super(EssayForm, self).clean()
+        if cleaned_data['publish'] and not cleaned_data.get('author_photo', None):
+            raise forms.ValidationError('Please provide an author_photo before publishing')
+        # only validate a photo update, can do bulk sanity checking elsewhere
+        updated_author_photo = cleaned_data.get('author_photo', None)
+        if updated_author_photo:
+            self.instance.validate_photo(url=updated_author_photo)
+        return cleaned_data
+
+
+def essay_link(obj):
+    url = obj.get_absolute_url()
+    return "<a href='%s'>Essay Page</a>" % url
+essay_link.allow_tags = True
+
+
+class EssayAdmin(admin.ModelAdmin):
+    list_display = ('id', 'author_name', 'title', essay_link, 'publish')
+    form = EssayForm
+
+
 flag_admin.register_group_to_flag_types(
     ('dev_moderator', 'broken'),
     ('content_moderator', 'inappropriate')
@@ -170,3 +196,4 @@ admin.site.register(OrgContent, OrgContentAdmin)
 admin.site.register(Topic)
 admin.site.register(Link, LinkAdmin)
 admin.site.register(Annotation)
+admin.site.register(Essay, EssayAdmin)

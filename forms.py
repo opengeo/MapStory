@@ -1,4 +1,3 @@
-from ctypes import __init__
 from django import forms
 from django.contrib.gis.geos import Point
 from account.forms import SignupForm
@@ -7,7 +6,6 @@ from mapstory.models import ContactDetail
 from mapstory.models import Annotation
 from mapstory.util import datetime_to_seconds
 from mapstory.util import parse_date_time
-import datetime
 import json
 import taggit
 

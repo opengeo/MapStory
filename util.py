@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.contrib.markup.templatetags import markup
 from django.core.cache import cache
 from django.conf import settings
+from django.template import defaultfilters
 from django.utils.encoding import smart_str, force_unicode
 from django.utils.safestring import mark_safe
 
@@ -197,3 +198,8 @@ def unicode_csv_dict_reader(fp):
     lines = ( line.encode('utf-8') for line in codecs.getreader(enc)(fp, errors='ignore') )
     reader = csv.DictReader(lines)
     return ( dict([ (k, unicode(v,'utf-8')) for k,v in row.items() if v]) for row in reader)
+
+
+def slugify(text):
+    slugtext = text.replace('&','and')
+    return defaultfilters.slugify(slugtext)
