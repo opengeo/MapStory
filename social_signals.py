@@ -107,15 +107,8 @@ def action(actor, verb, action_object=None, target=None, public=True):
     return newaction
 
 
-def _is_annotations_layer(obj):
-    if isinstance(obj, Layer):
-        from django.conf import settings # circular deps
-        for exc in settings.LAYER_EXCLUSIONS:
-            if re.search(exc, obj.name):
-                return True
-    return False
-
-def action_handler(create_verb='created', update_verb='updated', provide_user=True):
+def action_handler(create_verb='created', update_verb='updated', provide_user=True,
+    check_publish=True):
     def handler(sender, instance, created, **kwargs):
         if created and not create_verb:
             return
@@ -123,8 +116,9 @@ def action_handler(create_verb='created', update_verb='updated', provide_user=Tr
             publish = getattr(instance, 'publish', None)
         except PublishingStatus.DoesNotExist:
             publish = None
-        if publish and publish.status != 'Public':
-            return
+        if check_publish:
+            if not publish or publish.status != 'Public':
+                return
         active_verb = create_verb if created else update_verb
         actor = instance
         action_object = None
@@ -134,9 +128,6 @@ def action_handler(create_verb='created', update_verb='updated', provide_user=Tr
                 # a non request caused this
                 return
             action_object = instance
-            if _is_annotations_layer(action_object):
-                # for now, could create an action for the map
-                return
         action(actor, verb=active_verb, action_object=action_object)
     return handler
 
@@ -181,8 +172,6 @@ def comment_handler(sender, instance, created, **kwargs):
 def publishing_handler(sender, instance, created, **kw):
     if instance.status == 'Public':
         what = instance.map or instance.layer
-        if _is_annotations_layer(what):
-            return
         action(what.owner, 'published', action_object=what)
         layers = getattr(what, 'local_layers', [])
         for l in layers:
@@ -257,7 +246,7 @@ def audit_user(backend, details, response, social_user, uid,\
                     user, *args, **kwargs):
     user.get_profile().update_audit()
 
-register_save_handler(ContactDetail, create_verb='joined MapStory', provide_user=False)
+register_save_handler(ContactDetail, create_verb='joined MapStory', provide_user=False, check_publish=False)
 register_save_handler(Layer, create_verb='uploaded')
 register_save_handler(Map)
 map_changed_signal.connect(map_handler)

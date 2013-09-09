@@ -60,6 +60,8 @@ class SocialTest(TestCase):
     def setUp(self):
         self.bobby = User.objects.get(username='bobby')
         self.admin = User.objects.get(username='admin')
+        self.bobby.actor_actions.clear()
+        self.bobby.actor_actions.clear()
 
     def test_social_map_layer_actions(self):
         Layer.objects.create(owner=self.bobby, name='layer1',typename='layer1')
@@ -110,17 +112,13 @@ class SocialTest(TestCase):
         self.assertEqual(1, len(actions))
         self.assertEqual('admin added layer2 Layer on map1 by admin 0 minutes ago', str(actions[0]))
 
-    def test_annotations_filtering(self):
-        bobby_layer = Layer.objects.create(owner=self.bobby, name='_map_42_annotations',typename='doesntmatter')
-        # lets publish it
-        bobby_layer.publish.status = 'Public'
-        bobby_layer.publish.save()
-        actions = self.bobby.actor_actions.all()
-        # no record
-        self.assertEqual(0, len(actions))
-        bobby_layer.save()
-        # no record again
-        self.assertEqual(0, len(actions))
+    def test_contact_detail_change(self):
+        profile = self.bobby.get_profile()
+        profile.blurb = 'Foo'
+        profile.save()
+        # @todo the activity should be on the User, not the ContactDetail
+        # need to change social_signals to handle this correctly
+        self.assertEqual(2, profile.actor_actions.count())
 
     def test_activity_item_tag(self):
         lyr = Layer.objects.create(owner=self.bobby, name='layer1',typename='layer1', title='example')
@@ -205,7 +203,7 @@ class SocialTest(TestCase):
         content, mime_type = message.alternatives[0]
         self.assertEqual('text/html', mime_type)
         self.assertTrue('<img src="http://localhost:8000/static/mail/mapstorylogo.gif" />' in content)
-        self.assertTrue('<p>Hi, bobby!</p>' in content)
+        self.assertTrue('Hi, bobby!' in content)
 
     def test_welcome_mail_users(self):
         date_days_ago = lambda d,h=0: datetime.now() - timedelta(days=d, hours=h)
@@ -645,6 +643,10 @@ class FlagTest(TestCase):
         self.flag(self.map_comment, 'bad comment', 'inappropriate')
         self.content_moderator = Group.objects.get(name='content_moderator')
         self.dev_moderator = Group.objects.get(name='dev_moderator')
+
+    def tearDown(self):
+        # cleanup for other tests
+        self.c.logout()
 
     def flag(self, what, comment, flag_type):
         ct = ContentType.objects.get_for_model(what)
