@@ -479,6 +479,7 @@ def annotations(req, mapid):
         mapobj = _resolve_object(req, models.Map, 'maps.view_map',
                                  allow_owner=True, id=mapid)
         ann = models.Annotation.objects.filter(map=mapid)
+        ann = ann.order_by('start_time','end_time')
         if bool(req.GET.get('in_map', False)):
             ann = ann.filter(in_map=True)
         if bool(req.GET.get('in_timeline', False)):
@@ -520,7 +521,7 @@ def annotations(req, mapid):
                 fp = feature['properties'] = {}
                 for p in props:
                     val = getattr(res, p)
-                    if val:
+                    if val is not None:
                         fp[p] = val
                 results.append(feature)
             return results
