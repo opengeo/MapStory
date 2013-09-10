@@ -22,11 +22,19 @@ div.timeline-highlight-point-decorator {
 #msmap .x-panel-tbar {
     display: none;
 }
+.gxp-annotations-tip {
+    max-width: 200px;
+}
 .gxp-annotations-tip-body {
-    max-height: 100px;
-    padding-right: 15px;
-    overflow-x: hidden;
+    max-height: 375px;
+    max-width: 185px;
     overflow-y: auto;
+}
+body.ms-fullscreen .gxp-annotations-tip-body {
+    max-width: 485px;
+}
+body.ms-fullscreen .gxp-annotations-tip {
+    max-width: 500px;
 }
 </style>
 {% include "geonode/app_header.html" %}
