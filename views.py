@@ -475,7 +475,7 @@ def annotations(req, mapid):
     '''management of annotations for a given mapid'''
     #todo cleanup and break apart
     if req.method == 'GET':
-        cols = [ f.name for f in models.Annotation._meta.fields if f.name not in ('map','the_geom') ]
+        cols = [ 'title', 'content', 'start_time', 'end_time', 'in_map', 'in_timeline', 'appearance' ]
 
         mapobj = _resolve_object(req, models.Map, 'maps.view_map',
                                  allow_owner=True, id=mapid)
@@ -495,14 +495,14 @@ def annotations(req, mapid):
             response['Content-Disposition'] = 'attachment; filename=map-%s-annotations.csv' % mapobj.id
             response['Content-Encoding'] = 'utf-8'
             writer = csv.writer(response)
-            cols.remove('id')
             writer.writerow(cols)
             sidx = cols.index('start_time')
             eidx = cols.index('end_time')
             # default csv writer chokes on unicode
-            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else v
+            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else str(v)
+            get_value = lambda a, c: getattr(a, c) if c not in ('start_time','end_time') else ''
             for a in ann:
-                vals = [ encode(getattr(a, c)) for c in cols if c not in ('start_time','end_time')]
+                vals = [ encode(get_value(a, c)) for c in cols ]
                 vals[sidx] = a.start_time_str
                 vals[eidx] = a.end_time_str
                 writer.writerow(vals)
