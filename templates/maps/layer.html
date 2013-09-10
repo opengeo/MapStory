@@ -191,7 +191,7 @@
                     {% has_obj_perm user layer "maps.change_layer" as can_change %}
                     <div class="video-actions tabbable">
                         <ul class="actions-links nav nav-tabs fancyfont">
-                            <li><a href="#describemap" class="icn info active" data-toggle="pill">Info</a></li>
+                            <li class="active"><a href="#describemap" class="icn info" data-toggle="pill">Info</a></li>
                             {% if can_change %}
                             <li><a href="#actions7" class="icn layers" data-toggle="pill">Style</a></li>
                             {% endif %}
