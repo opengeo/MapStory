@@ -67,7 +67,7 @@ def send_user_welcome(user):
     if site_prefix[-1] == '/': site_prefix = site_prefix[:-1]
     c = Context({'user': user, 'site_prefix': site_prefix})
     _logger.info('sending welcome message to %s', user.email)
-    send_html_mail("[MapStory] Welcome To MapStory",
+    send_html_mail("[MapStory] Welcome To MapStory!",
                    message=WELCOME_EMAIL_TXT.render(c),
                    message_html=WELCOME_EMAIL_HTML.render(c),
                    from_email="hello@mapstory.org",

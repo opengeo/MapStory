@@ -1,5 +1,11 @@
 {% load mapstory_tags %}
 {% load staticfiles %}
+
+{% comment %}
+before doing any more styling work, investigate use of:
+https://github.com/davidjamesmoss/django-inline-css-tag
+{% endcomment %}
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
     <head>
@@ -40,26 +46,26 @@
 
                                     <p style="margin:8px 0">Here's how you can get started:</p>
 
-                                    <h3 style="color:#f46817; font-size:14px;">Learn</h3>
+                                    <h3 style="color:#f46817; font-size:18px; font-weight:normal; margin:32px 0 8px 0;">Learn</h3>
 
                                     <p style="margin:8px 0">MapStorytelling involves using open data, maps and your own reflection to illuminate change in place over time. It's something anyone can learn, and your peers are adding more resources all the time to help you along.</p>
 
                                     <p style="margin:8px 0">Learn the <span style="color:#f46817 !important;">{% wiki_link 'how_to' 'basics' %}</span>.</p>
 
-                                    <h3 style="color:#f46817; font-size:14px;">Share What You Know</h3>
+                                    <h3 style="color:#f46817; font-size:18px; font-weight:normal; margin:32px 0 8px 0;">Share What You Know</h3>
 
                                     <p style="margin:8px 0">There's three ways to share on MapStory. Just remember <b>A, B, C</b>. First, you can <b>add</b> new spatially and temporally enabled datasets, which we call StoryLayers. Second, you can <b>build</b> MapStories using StoryLayers and other narrative elements that you would like. Finally, you can <b>curate</b> content that appears on MapStory to improve its quality and accuracy.</p>
 
                                     <p style="margin:8px 0">Start <a style="color:#f46817" href="http://mapstory.org/">sharing on MapStory</a>.</p>
 
-                                    <h3 style="color:#f46817; font-size:14px;">Build the Community</h3>
+                                    <h3 style="color:#f46817; font-size:18px; font-weight:normal; margin:32px 0 8px 0;">Build the Community</h3>
 
                                     <p style="margin:8px 0">MapStory is a nonprofit open educational resource. We rely on users like you to launch new initiatives, develop new tools and raise funds to keep the project going. So, get involved and build the future of MapStory that you want to see!</p>
 
                                     <p style="margin:8px 0">Get involved with the <a style="color:#f46817" href="http://wiki.mapstory.org">community</a>.</p>
 
                                     <p style="margin-bottom:0">Thanks for joining us, and happy MapStorytelling!</p>
-                                    <p style="margin-top:0">The MapStory Team</p>
+                                    <p style="margin-top:0; padding-bottom:18px;">The MapStory Team</p>
                                 </div>
                                 </td>
                             </tr>
