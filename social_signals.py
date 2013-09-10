@@ -205,7 +205,10 @@ def flag_handler(flagged_instance, flagged_content, **kw):
     if flagged_instance.flag_type == 'broken':
         q = q | Q(groups__name='dev_moderator')
     recps = has_email.filter(q)
-    link = settings.SITEURL + '/admin/flag/flaginstance/%s' % flagged_instance.pk
+    if recps.count() == 0:
+        _logger.warning('No recipients for flag')
+        return
+    link = settings.SITEURL + 'admin/flag/flaginstance/%s' % flagged_instance.pk
     message = loader.render_to_string("flag/email.txt", {
         'flag' : flagged_instance,
         'url' : link,
