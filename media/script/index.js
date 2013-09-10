@@ -2,7 +2,7 @@ $(function() {
     function adjustSizes() {
         var left = $(".span8 .box"),
         padding = left.outerHeight(true) - left.height(),
-        target = $(".span4").height() - padding, 
+        target = $(".span4").height() - padding,
         other = $("#sections").children().first().outerHeight(true);
         left.children().not("#sections").each(function(i,e) {
             other += $(e).outerHeight(true);
@@ -46,7 +46,7 @@ $(function() {
         shuffle(els);
         els.appendTo(els.parent());
         els.slice(0,4).each(function(i, e) {
-            height += $(e).outerHeight() + (+$(e).css('margin-bottom').replace('px', ''))
+            height += $(e).outerHeight() + (+$(e).css('margin-bottom').replace('px', ''));
         });
         els.parent('.scroll-container').height(height);
     })();
