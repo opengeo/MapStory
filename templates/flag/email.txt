@@ -2,4 +2,4 @@
 
 {{ flag.comment }}
 
-{{ url }}
+<a href='{{ url }}'>Admin Link</a>
