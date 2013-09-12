@@ -338,12 +338,14 @@ class ContactDetail(Contact):
         cnt = self.user.avatar_set.count()
         if cnt > 0: return True
         md5 = md5_constructor(self.user.email).hexdigest()
-        url = "http://en.gravatar.com/%s.json" % md5
-        # @todo be nicer if this fails?
-        resp = urllib2.urlopen(url)
-        obj = json.loads(resp.read())
-        if isinstance(obj, basestring):
-            return False
+        # the d param forces a 404 if missing, otherwise the default comes back
+        url = "http://www.gravatar.com/avatar/%s?d=404" % md5
+        try:
+            urllib2.urlopen(url)
+        except urllib2.HTTPError, hte:
+            if hte.code == 404:
+                return False
+            raise hte
         return True
 
     def update_audit(self):
