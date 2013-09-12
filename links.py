@@ -1,6 +1,6 @@
 links = {
     "wiki" : {
-        "prefix" : "http://wiki.mapstory.org/index.php?title=",
+        "prefix" : "http://wiki.mapstory.org/wiki/",
         "links" : [
             ("curation_guide_ratings", "Curation_Guide#Ratings"),
             ("curation_guide_flag_broken", "Curation_Guide#Flagging_Content_as_Broken"),
