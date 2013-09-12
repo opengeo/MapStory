@@ -414,8 +414,18 @@ The majority of the fullscreen viewer is the map window. This is where the MapSt
 
 .. _annotations:
 
+Annotations
+===========
+
+TODO - overview
+
+Editing annotations
+-------------------
+
+TODO - explain
+
 Using media in annotations
-==========================
+--------------------------
 
 The following types of media can be embedded in an annotation pop-up in the description field:
 
@@ -444,6 +454,57 @@ For Flickr, use the **Share** button in the Flickr interface and then press the 
 To embed any arbitrary URL in the annotation pop-up, just enter it as is::
 
     <a target="_blank" href="http://example.com" title="Example URL">Click here to go to this example URL</a>
+
+Bulk upload of annotations
+--------------------------
+
+Bulk upload of annotations is supported via a CSV file. The current mode of operations
+is to replace any annotations with those that are uploaded. The format for the CSV
+is as follows:
+
+.. list-table:: Annotations CSV Format
+
+   * - Column
+     - Required
+     - Description
+     - Choices/Example
+   * - title
+     - Yes
+     - Main display text
+     -
+   * - content
+     - No
+     - HTML content
+     -
+   * - start_time
+     - No
+     - When the annotation will start being displayed
+     - yyyy-mm-dd, yyyyy/mm/dd (can omit month and/or day)
+   * - end_time
+     - No
+     - When the annotation will stop being displayed
+     - same as `start_time`
+   * - in_timeline
+     - No
+     - Whether the annotation will appear in the timeline.
+     - True, False or empty (implies False)
+   * - in_map
+     - No
+     - Whether the annotation will appear in the map.
+     - True, False or empty (implies False)
+   * - appearance
+     - No
+     - Where the annotation will appear relative to the map.
+     - TODO
+   * - lat
+     - Only if lon provided
+     - A geographic coordinate in decimal degrees latitude
+     - 41
+   * - lon
+     - Only if lat provided
+     - A geographic coordinate in decimal degrees longitude
+     - -106
+
 
 
 .. _tutorial:

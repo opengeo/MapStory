@@ -1152,30 +1152,46 @@ article h3 {
   font-style:normal;
 }
 
-.describe-object label {
+.story-detail label {
     font-weight: bold;
 }
 
-.describe-object form input
+.story-detail form input
 {
     width: 586px;
 }
-.describe-object form textarea
+.story-detail form textarea
 {
     width: 578px;
 }
-.describe-object form textarea {
+.story-detail form textarea {
     resize: both;
 }
-.describe-object .rating-area {
+.story-detail .rating-area {
     float: right;
 }
-.describe-object .rating-area #user_rating {
+.story-detail .rating-area #user_rating {
     display: inline-block;
 }
-.describe-object .rating-area span {
+.story-detail .rating-area span {
     vertical-align: top;
     font-size: 13px;
+}
+.story-detail .flag textarea,
+.story-detail .flag form input {
+    width: 400px;
+}
+.story-detail .flag label {
+    display: inline;
+}
+
+.describe-object .comment_box textarea {
+    width: 596px;
+}
+
+.describe-object .comments_container .modal textarea {
+    width: 520px;
+    display: block;
 }
 
 /** video mini **/
@@ -1986,27 +2002,6 @@ h2.icn-storylayer span, h2.icn-mapstory span {
     margin-bottom: 10px;
 }
 
-/*** modal ***/
-.modal {
-  -moz-border-radius:0;
-  -webkit-border-radius:0;
-  border-radius:0;
-}
-
-.modal .modal-header {
-  border-bottom:0;
-  padding:9px 30px 0;
-}
-
-.modal .modal-header h3 {
-  font-size:20px;
-  padding-top:15px;
-}
-
-.modal .modal-body {
-  padding:20px 30px;
-}
-
 /*bootstrap fixes*/
 .olTileImage {
     max-width: none;
@@ -2186,4 +2181,8 @@ h2.icn-storylayer span, h2.icn-mapstory span {
 .edit-profile form .form textarea {
     width: 80%;
     resize: both;
+}
+
+.icon-orange {
+  background-image: url("../bootstrap/img/glyphicons-halflings-orange.png");
 }

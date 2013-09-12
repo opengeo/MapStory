@@ -21,20 +21,16 @@ from dialogos.models import Comment
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.core import serializers
-from django.core.cache import cache
-from django.core.exceptions import SuspiciousOperation
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry
 from django.db.models import signals
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -42,11 +38,9 @@ from django.template import RequestContext
 from django.template import loader
 from django.template import defaultfilters as filters
 from django.contrib.contenttypes.models import ContentType
-from django.views.decorators.cache import cache_page
 
 
 from lxml import etree
-import codecs
 import csv
 import json
 import math
@@ -127,7 +121,7 @@ def _related_stories_page(req, section=None, map_obj=None):
     try:
         page = pager.page(page_num)
     except EmptyPage:
-        pass
+        raise Http404()
     return target, page
 
 
@@ -410,7 +404,7 @@ def storyteller_activity_pager(req, username, what='actions'):
     try:
         page = pager.page(page_num)
     except EmptyPage:
-        pass
+        raise Http404()
     link = tiles =  ''
     if page:
         show_link = what != 'actions'
@@ -427,7 +421,7 @@ def by_storyteller_pager(req, user, what):
     try:
         page = pager.page(page_num)
     except EmptyPage:
-        pass
+        raise Http404()
     link = tiles = ''
     when = lambda o: o.last_modified if what == 'maps' else o.date
     if pager:
@@ -448,6 +442,7 @@ def flag_comment(req):
         'object_id' : req.GET['id'],
         'content_type' : ct.id,
         'creator_field' : 'author',
+        'flag_type' : 'inappropriate'
     }))
     
 @login_required
@@ -480,7 +475,7 @@ def annotations(req, mapid):
     '''management of annotations for a given mapid'''
     #todo cleanup and break apart
     if req.method == 'GET':
-        cols = [ f.name for f in models.Annotation._meta.fields if f.name not in ('map','the_geom') ]
+        cols = [ 'title', 'content', 'start_time', 'end_time', 'in_map', 'in_timeline', 'appearance' ]
 
         mapobj = _resolve_object(req, models.Map, 'maps.view_map',
                                  allow_owner=True, id=mapid)
@@ -500,14 +495,14 @@ def annotations(req, mapid):
             response['Content-Disposition'] = 'attachment; filename=map-%s-annotations.csv' % mapobj.id
             response['Content-Encoding'] = 'utf-8'
             writer = csv.writer(response)
-            cols.remove('id')
             writer.writerow(cols)
             sidx = cols.index('start_time')
             eidx = cols.index('end_time')
             # default csv writer chokes on unicode
-            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else v
+            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else str(v)
+            get_value = lambda a, c: getattr(a, c) if c not in ('start_time','end_time') else ''
             for a in ann:
-                vals = [ encode(getattr(a, c)) for c in cols if c not in ('start_time','end_time')]
+                vals = [ encode(get_value(a, c)) for c in cols ]
                 vals[sidx] = a.start_time_str
                 vals[eidx] = a.end_time_str
                 writer.writerow(vals)
@@ -678,23 +673,29 @@ def upload_style(req):
     if len(el) == 0 and not data.get('name'):
         return respond(errors="Please provide a name, unable to extract one from the SLD.")
     name = data.get('name') or el[0].text
-    if data['update']:
-        match = None
+
+    def find_style(name):
         styles = list(layer.styles) + [layer.default_style]
         for style in styles:
             if style.sld_name == name:
-                match = style; break
+                return style
+
+    cat = Layer.objects.gs_catalog
+    if data['update']:
+        match = find_style(name)
         if match is None:
-            return respond(errors="Cannot locate style : " + name)
+            if cat.get_style(name) is not None:
+                return respond(errors="""A style with this name is used by another layer.
+                         Please choose a different name.""")
+            return respond(errors="Cannot locate the existing style to update : " + name)
         match.update_body(sld)
     else:
         try:
-            cat = Layer.objects.gs_catalog
             cat.create_style(name, sld)
             layer.styles = layer.styles + [ type('style',(object,),{'name' : name}) ]
             cat.save(layer.publishing)
         except ConflictingDataError,e:
-            return respond(errors="""A layer with this name exists. Select
+            return respond(errors="""A style with this name exists. Select
                                      the update option if you want to update.""")
     return respond(body={'success':True,'style':name,'updated':data['update']})
 
@@ -843,3 +844,11 @@ def _remove_annotation_layer(sender, instance, **kw):
         pass
 
 signals.pre_delete.connect(_remove_annotation_layer, sender=Map)
+
+def render_email(request):
+    t = request.GET['t']
+    if t.split('.')[-1].lower() == 'txt':
+        mime = "text/plain"
+    else:
+        mime = "text/html"
+    return render_to_response(t, {'user': {'first_name': 'FIRST NAME'}}, mimetype=mime)

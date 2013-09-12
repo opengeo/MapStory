@@ -158,8 +158,10 @@ for i in xrange(len(dateparts)):
     _patterns.append('-'.join(dateparts[0:i + 1]))
 for i in xrange(len(timeparts)):
     time = ':'.join(timeparts[0:i + 1])
-    _patterns.append('/'.join(dateparts) + ' ' + time)
     _patterns.append('/'.join(dateparts) + 'T' + time)
+    _patterns.append('-'.join(dateparts) + 'T' + time)
+    _patterns.append('/'.join(dateparts) + ' ' + time)
+    _patterns.append('-'.join(dateparts) + ' ' + time)
 del dateparts, timeparts
 
 
@@ -173,6 +175,7 @@ def parse_date_time(val):
         try:
             return datetime.datetime.strptime(val, p)
         except ValueError:
+            print p, val
             pass
 
 

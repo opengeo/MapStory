@@ -1,0 +1,30 @@
+{% load flag_tags %}
+{% load mapstory_tags %}
+<div class="clearfix">
+    {% if request.user.is_authenticated %}
+    <p>Flag this as inappropriate or broken.</p>
+    <div class="msg">
+        <div class="alert alert-error hide"></div>
+        <div class="alert alert-info hide"></div>
+    </div>
+    <div class="pull-left flag-type" style="width:25%; margin-top:6em">
+        <p>What's wrong?</p>
+        <ul>
+            <li>
+                <input type='radio' name='flag_type' value="broken" id='id_broken'><label for='id_broken'>Broken</label>
+                {% wiki_help_link 'curation_guide_flag_broken'%}
+            </li>
+            <li>
+                <input type='radio' name='flag_type' value="inappropriate" id='id_inappropriate'><label for='id_inappropriate'>Inappropriate</label>
+                {% wiki_help_link 'curation_guide_flag_inappropriate'%}
+            </li>
+        </ul>
+    </div>
+    <div class="pull-right" style="width:70%;">
+        {% flag flag_object 'owner' %}
+    </div>
+    {% else %}
+    Please login to flag content.
+    {% endif %}
+
+</div>

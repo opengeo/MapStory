@@ -76,8 +76,8 @@
         <ul class="fancyfont">
             <li rel="category"><a href="/" class="tab-sections {% active_nav_tab request "sections" %}">SECTIONS</a></li>
             <li rel="search"><a href="{% url new_search %}" class="tab-search {% active_nav_tab request "search" %}">SEARCH MAPSTORY</a></li>
-            <li rel="howto"><a href="http://wiki.mapstory.org/index.php?title=How_To" target="_blank" class="tab-how">HOW TO</a></li>
-            <li rel="about"><a href="http://wiki.mapstory.org/index.php?title=Main_Page" target="_blank">ABOUT</a></li>
+            <li rel="howto">{% wiki_link 'how_to' text='HOW TO' classes='tab-how' %}</li>
+            <li rel="about">{% wiki_link 'main_page' text='ABOUT' %}</li>
             <li><a href="http://blog.mapstory.org/" class="tab-blog" target="_blank">BLOG</a></li>
             {% if user.is_authenticated %}
                 <li class=""><a class="" id="profileLink" href="{% url profiles_profile_detail user.username %}">{% trans "PROFILE" %}</a></li>
@@ -123,12 +123,12 @@
           <li><a rel="search" href="{% url search_maps %}" class="subtab-search-stories {% active_sub_nav request search_maps %}">Search MapStories</a></li>
           <li><a rel="search" href="{% url search_owners %}" class="subtab-search-tellers {% active_sub_nav request search_owners %}">Search StoryTellers</a></li>
           {% endcache %}
-          <li><a rel="about" class="hide" href="http://wiki.mapstory.org/index.php?title=MapStory.org" target="_blank">MapStory.org</a></li>
-          <li><a rel="about" class="hide" href="http://wiki.mapstory.org/index.php?title=Community" target="_blank">The Community</a></li>
-          <li><a rel="about" class="hide" href="http://wiki.mapstory.org/index.php?title=The_MapStory_Foundation" target="_blank">The Foundation</a></li>
-          <li><a rel="howto" class="hide" href="http://wiki.mapstory.org/index.php?title=How_To#Get_Started" target="_blank">Get Started</a></li>
-          <li><a rel="howto" class="hide" href="http://wiki.mapstory.org/index.php?title=How_To#Get_Engaged" target="_blank">Get Engaged</a></li>
-          <li><a rel="howto" class="hide" href="http://wiki.mapstory.org/index.php?title=How_To#Get_Skillz" target="_blank">Get Skillz</a></li>
+          <li>{% wiki_link 'mapstory_org' text='Mapstory.org' rel='about' classes='hide' %}</li>
+          <li>{% wiki_link 'community' text='The Community' rel='about' classes='hide' %}</li>
+          <li>{% wiki_link 'mapstory_foundation' text='The Foundation' rel='about' classes='hide' %}</li>
+          <li>{% wiki_link 'how_to_get_started' text='Get Started' rel='howto' classes='hide' %}</li>
+          <li>{% wiki_link 'how_to_get_engaged' text='Get Engaged' rel='howto' classes='hide' %}</li>
+          <li>{% wiki_link 'how_to_get_skillz' text='Get_Skillz' rel='howto' classes='hide' %}</li>
       </ul>
         {% endblock %}
 
@@ -184,12 +184,13 @@
       <div class="wrap selfclear">
         <div class="onecol">
           Powered by <a href="http://geonode.org">{% trans "GeoNode" %}</a>
-          | <a href="http://wiki.mapstory.org/index.php?title=License_and_Copyright">License</a>
-          | <a href="http://wiki.mapstory.org/index.php?title=Terms_of_Service">Terms of Service</a>
+          | <a href="http://help.mapstory.org">{% trans "Help" %}</a>
+          | {% wiki_link 'license_and_copyright' text='License' %}
+          | {% wiki_link 'terms_of_service' text='Terms of Service' %}
           {% comment %}
           | <a href="{% url geonode.views.developer %}">{% trans "For Developers" %}</a>
           {% endcomment %}
-          <span style="float:right">MapStory&reg; is a registered trademark of the <a href='http://wiki.mapstory.org/index.php?title=The_MapStory_Foundation'>MapStory Foundation</a>, a non-profit organization.</span>
+          <span style="float:right">MapStory&reg; is a registered trademark of the {% wiki_link 'mapstory_foundation' text='MapStory Foundation' %}, a non-profit organization.</span>
         </div>
       </div><!-- /.wrap -->
     </div><!-- /#footer -->

@@ -1,14 +1,11 @@
 from mapstory.models import *
+from dialogos.models import Comment
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.contrib import admin
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.http import HttpResponse
 from django.core import urlresolvers
 from django.contrib.auth.admin import UserAdmin
-import csv
+from flag import admin as flag_admin
 
 from mapstory.reports.admin import export_via_model
 
@@ -149,6 +146,17 @@ class OrgAdmin(admin.ModelAdmin):
 
 class OrgContentAdmin(admin.ModelAdmin):
     pass
+
+
+flag_admin.register_group_to_flag_types(
+    ('dev_moderator', 'broken'),
+    ('content_moderator', 'inappropriate')
+)
+
+def resolve_comment_absolute_url(comment):
+    return comment.content_object.get_absolute_url() + "#comment-%s" % comment.id
+flag_admin.register_absolute_url_resolver(Comment, resolve_comment_absolute_url)
+
 
 #@hack the UserAdmin to enable sorting by date_joined
 UserAdmin.list_display += ('date_joined',)
