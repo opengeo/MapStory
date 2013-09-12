@@ -59,14 +59,13 @@ def index(req):
     # two modes of operation here
     # 1) don't specify publish and one will randomly be chosen
     # 2) specify one or more publish links and one will be chosen
-    
-    #users = User.objects.exclude(username__in=settings.USERS_TO_EXCLUDE_IN_LISTINGS)
-    users = []
-    
+
+    essays = list(models.Essay.objects.filter(publish=True))
+    random.shuffle(essays)
     return render_to_response('index.html', RequestContext(req,{
         "video" : models.VideoLink.objects.front_page_video(),
         "tiles" : lazy_tiles(),
-        "users" : users
+        "essays" : essays
     }))
 
 def how_to(req):
@@ -852,3 +851,17 @@ def render_email(request):
     else:
         mime = "text/html"
     return render_to_response(t, {'user': {'first_name': 'FIRST NAME'}}, mimetype=mime)
+
+
+def essay(req, title):
+    if req.method == 'GET':
+        essay = get_object_or_404(models.Essay, slug=title)
+    elif req.method == 'POST':
+        from django.contrib.markup.templatetags import markup
+        if not req.user.is_staff:
+            raise PermissionDenied()
+        essay = dict([ (k,req.POST.get(k, '')) for k in [ f.name for f in models.Essay._meta.fields]])
+        essay['html'] = markup.textile(essay['content'])
+    return render_to_response('mapstory/essay.html', RequestContext(req, {
+        'essay' : essay
+    }))

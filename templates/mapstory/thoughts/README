@@ -1,3 +1,0 @@
-textile files that are used to generate html:
-
-python -c "import sys;from textile import functions; print functions.textile(open(sys.argv[1]).read())" filename > filename.html
