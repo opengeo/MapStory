@@ -110,6 +110,7 @@ urlpatterns += patterns('mapstory.views',
     url(r"^accounts/logout", WarperCookieLogout.as_view(), name="account_logout"),
     url(r"^account/confirm_email/(?P<key>\w+)/$", ConfirmEmailView.as_view(), name="account_confirm_email"),
     url(r"^account/signup/$", SignupView.as_view(), name="account_signup"),
+    url(r'^accounts/verify/$', 'account_verify',  name='account_verify'),
     # and this from geonode
     url(r'^data/(?P<layername>[^/]*)/metadata$', 'layer_metadata', name="layer_metadata"),
     # and to make url kinda sane
