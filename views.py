@@ -63,14 +63,13 @@ def index(req):
     # two modes of operation here
     # 1) don't specify publish and one will randomly be chosen
     # 2) specify one or more publish links and one will be chosen
-    
-    #users = User.objects.exclude(username__in=settings.USERS_TO_EXCLUDE_IN_LISTINGS)
-    users = []
-    
+
+    essays = list(models.Essay.objects.filter(publish=True))
+    random.shuffle(essays)
     return render_to_response('index.html', RequestContext(req,{
         "video" : models.VideoLink.objects.front_page_video(),
         "tiles" : lazy_tiles(),
-        "users" : users
+        "essays" : essays
     }))
 
 def how_to(req):
@@ -446,6 +445,7 @@ def flag_comment(req):
         'object_id' : req.GET['id'],
         'content_type' : ct.id,
         'creator_field' : 'author',
+        'flag_type' : 'inappropriate'
     }))
     
 @login_required
@@ -478,11 +478,12 @@ def annotations(req, mapid):
     '''management of annotations for a given mapid'''
     #todo cleanup and break apart
     if req.method == 'GET':
-        cols = [ f.name for f in models.Annotation._meta.fields if f.name not in ('map','the_geom') ]
+        cols = [ 'title', 'content', 'start_time', 'end_time', 'in_map', 'in_timeline', 'appearance' ]
 
         mapobj = _resolve_object(req, models.Map, 'maps.view_map',
                                  allow_owner=True, id=mapid)
         ann = models.Annotation.objects.filter(map=mapid)
+        ann = ann.order_by('start_time','end_time')
         if bool(req.GET.get('in_map', False)):
             ann = ann.filter(in_map=True)
         if bool(req.GET.get('in_timeline', False)):
@@ -498,14 +499,14 @@ def annotations(req, mapid):
             response['Content-Disposition'] = 'attachment; filename=map-%s-annotations.csv' % mapobj.id
             response['Content-Encoding'] = 'utf-8'
             writer = csv.writer(response)
-            cols.remove('id')
             writer.writerow(cols)
             sidx = cols.index('start_time')
             eidx = cols.index('end_time')
             # default csv writer chokes on unicode
-            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else v
+            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else str(v)
+            get_value = lambda a, c: getattr(a, c) if c not in ('start_time','end_time') else ''
             for a in ann:
-                vals = [ encode(getattr(a, c)) for c in cols if c not in ('start_time','end_time')]
+                vals = [ encode(get_value(a, c)) for c in cols ]
                 vals[sidx] = a.start_time_str
                 vals[eidx] = a.end_time_str
                 writer.writerow(vals)
@@ -524,7 +525,7 @@ def annotations(req, mapid):
                 fp = feature['properties'] = {}
                 for p in props:
                     val = getattr(res, p)
-                    if val:
+                    if val is not None:
                         fp[p] = val
                 results.append(feature)
             return results
@@ -676,23 +677,29 @@ def upload_style(req):
     if len(el) == 0 and not data.get('name'):
         return respond(errors="Please provide a name, unable to extract one from the SLD.")
     name = data.get('name') or el[0].text
-    if data['update']:
-        match = None
+
+    def find_style(name):
         styles = list(layer.styles) + [layer.default_style]
         for style in styles:
             if style.sld_name == name:
-                match = style; break
+                return style
+
+    cat = Layer.objects.gs_catalog
+    if data['update']:
+        match = find_style(name)
         if match is None:
-            return respond(errors="Cannot locate style : " + name)
+            if cat.get_style(name) is not None:
+                return respond(errors="""A style with this name is used by another layer.
+                         Please choose a different name.""")
+            return respond(errors="Cannot locate the existing style to update : " + name)
         match.update_body(sld)
     else:
         try:
-            cat = Layer.objects.gs_catalog
             cat.create_style(name, sld)
             layer.styles = layer.styles + [ type('style',(object,),{'name' : name}) ]
             cat.save(layer.publishing)
         except ConflictingDataError,e:
-            return respond(errors="""A layer with this name exists. Select
+            return respond(errors="""A style with this name exists. Select
                                      the update option if you want to update.""")
     return respond(body={'success':True,'style':name,'updated':data['update']})
 
@@ -848,7 +855,7 @@ def render_email(request):
         mime = "text/plain"
     else:
         mime = "text/html"
-    return render_to_response(t, RequestContext(request,{'user': {'first_name': 'FIRST NAME'}}), mimetype=mime)
+    return render_to_response(t, {'user': {'first_name': 'FIRST NAME'}}, mimetype=mime)
 
 def account_verify(request):
 
@@ -877,3 +884,17 @@ def account_verify(request):
         return HttpResponseForbidden(msg)
     return HttpResponse('{"id":"%s","first_name":"%s","last_name":"%s","username":"%s","email":"%s"}' 
             % (user.id, user.first_name, user.last_name, user.username, user.email), mimetype='application/json')
+
+
+def essay(req, title):
+    if req.method == 'GET':
+        essay = get_object_or_404(models.Essay, slug=title)
+    elif req.method == 'POST':
+        from django.contrib.markup.templatetags import markup
+        if not req.user.is_staff:
+            raise PermissionDenied()
+        essay = dict([ (k,req.POST.get(k, '')) for k in [ f.name for f in models.Essay._meta.fields]])
+        essay['html'] = markup.textile(essay['content'])
+    return render_to_response('mapstory/essay.html', RequestContext(req, {
+        'essay' : essay
+    }))

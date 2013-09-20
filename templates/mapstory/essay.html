@@ -1,0 +1,22 @@
+{% extends "page_layout.html" %}
+
+{% block extra_head %}
+<style type="text/css">
+    .content blockquote p {
+        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        font-size: 13px !important;
+        line-height: 18px !important;
+        font-style: italic !important;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+
+<div class="span8 content essay">
+    <h2>{{ essay.title }}</h2>
+    <p><img src="{{ essay.author_photo }}" class="thoughts" alt="{{ essay.author_name }}" /></p>
+    {% firstof essay.html essay.get_html %}
+</div>
+
+{% endblock %}

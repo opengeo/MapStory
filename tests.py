@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 
@@ -20,10 +21,14 @@ from mapstory.templatetags import mapstory_tags
 from mapstory.util import unicode_csv_dict_reader
 
 from agon_ratings.models import Rating
+from bs4 import BeautifulSoup
 from dialogos.models import Comment
+from flag.models import add_flag
+import httplib2
 from mailer import engine as email_engine
 
 from datetime import timedelta
+from datetime import datetime
 import json
 import logging
 import re
@@ -38,20 +43,32 @@ Layer._populate_from_gs = lambda s: None
 Layer.verify = lambda s: None
 Layer.save_to_geoserver = lambda s: None
 
+
+def drain_mail_queue():
+    # mailer doesn't play well with default mail testing
+    mails = []
+    for m in email_engine.prioritize():
+        mails.append(m)
+        m.delete()
+    return mails
+
+
 class SocialTest(TestCase):
-    
+
     fixtures = ['test_data.json','map_data.json']
-        
+
     def setUp(self):
         self.bobby = User.objects.get(username='bobby')
         self.admin = User.objects.get(username='admin')
+        self.bobby.actor_actions.clear()
+        self.bobby.actor_actions.clear()
 
     def test_social_map_layer_actions(self):
         Layer.objects.create(owner=self.bobby, name='layer1',typename='layer1')
         bobby_layer = Layer.objects.create(owner=self.bobby, name='layer2', typename='layer2')
         # no activity yet, still Private
         self.assertFalse(self.bobby.actor_actions.all())
-        
+
         # lets publish it
         bobby_layer.publish.status = 'Public'
         bobby_layer.publish.save()
@@ -73,7 +90,7 @@ class SocialTest(TestCase):
         admin_map.update_from_viewer(dummy.viewer_json())
         # no activity yet, still Private
         self.assertFalse(self.admin.actor_actions.all())
-        
+
         # lets publish it and ensure things work
         self.bobby.useractivity.other_actor_actions.clear()
         admin_map.publish.status = 'Public'
@@ -86,7 +103,7 @@ class SocialTest(TestCase):
         actions = self.bobby.useractivity.other_actor_actions.all()
         self.assertEqual(1, len(actions))
         self.assertEqual('admin published layer1 Layer on map1 by admin 0 minutes ago', str(actions[0]))
-        
+
         # already published, add another layer and make sure it shows up in bobby
         self.bobby.useractivity.other_actor_actions.clear()
         MapLayer.objects.create(name = 'layer2', ows_url='layer2', map=dummy, stack_order=2)
@@ -95,17 +112,13 @@ class SocialTest(TestCase):
         self.assertEqual(1, len(actions))
         self.assertEqual('admin added layer2 Layer on map1 by admin 0 minutes ago', str(actions[0]))
 
-    def test_annotations_filtering(self):
-        bobby_layer = Layer.objects.create(owner=self.bobby, name='_map_42_annotations',typename='doesntmatter')
-        # lets publish it
-        bobby_layer.publish.status = 'Public'
-        bobby_layer.publish.save()
-        actions = self.bobby.actor_actions.all()
-        # no record
-        self.assertEqual(0, len(actions))
-        bobby_layer.save()
-        # no record again
-        self.assertEqual(0, len(actions))
+    def test_contact_detail_change(self):
+        profile = self.bobby.get_profile()
+        profile.blurb = 'Foo'
+        profile.save()
+        # @todo the activity should be on the User, not the ContactDetail
+        # need to change social_signals to handle this correctly
+        self.assertEqual(2, profile.actor_actions.count())
 
     def test_activity_item_tag(self):
         lyr = Layer.objects.create(owner=self.bobby, name='layer1',typename='layer1', title='example')
@@ -134,27 +147,19 @@ class SocialTest(TestCase):
         for a in self.bobby.actor_actions.all():
             self.assertEqual('', mapstory_tags.activity_item(a))
 
-    def drain_mail_queue(self):
-        # mailer doesn't play well with default mail testing
-        mails = []
-        for m in email_engine.prioritize():
-            mails.append(m)
-            m.delete()
-        return mails
-        
     def test_no_notifications(self):
         prefs = UserActivity.objects.get(user=self.bobby)
         prefs.notification_preference = 'N'
         prefs.save()
-        
+
         layer = Layer.objects.create(owner=self.bobby, name='layer1',typename='layer1')
         comment_on(layer, self.admin, "This is great")
-        
+
         prefs.notification_preference = 'E'
         prefs.save()
         comment_on(layer, self.admin, "This is great")
-        
-        mail = self.drain_mail_queue()
+
+        mail = drain_mail_queue()
         self.assertEqual(1, len(mail))
 
     def test_batch_mailer(self):
@@ -186,6 +191,34 @@ class SocialTest(TestCase):
         self.assertEqual('1', re.search('\d', messages[1].getMessage()).group())
 
         logger.removeHandler(handler)
+
+    def test_welcome_mail_content(self):
+        social_signals.send_user_welcome(self.bobby)
+        mail = drain_mail_queue()
+        self.assertEqual(1, len(mail))
+        email = mail[0] # mailer.models.Message
+        message = email.email # django.core.mail.message.EmailMultiAlternatives
+        self.assertTrue('Hi, bobby!' in message.body)
+        self.assertEqual(1, len(message.alternatives))
+        content, mime_type = message.alternatives[0]
+        self.assertEqual('text/html', mime_type)
+        self.assertTrue('<img src="http://localhost:8000/static/mail/mapstorylogo.gif" />' in content)
+        self.assertTrue('Hi, bobby!' in content)
+
+    def test_welcome_mail_users(self):
+        date_days_ago = lambda d,h=0: datetime.now() - timedelta(days=d, hours=h)
+        User.objects.create(username='day3', date_joined=date_days_ago(3),
+                                   email='a@b.c')
+        User.objects.create(username='day1_5', date_joined=date_days_ago(1,12),
+                                   email='c@d.e')
+        drain_mail_queue()
+        social_signals.daily_user_welcomes()
+        mail = drain_mail_queue()
+        # we're expecting a single mail to day1_5,
+        # day3 is too old, bobby and others are too recent
+        self.assertEqual(1, len(mail))
+        email = mail[0]
+        self.assertEqual('c@d.e', email.to_addresses[0])
 
 
 def comment_on(obj, user, comment, reply_to=None):
@@ -455,6 +488,11 @@ class AnnotationsTest(TestCase):
         self.assertEqual(ann.the_geom.x, 10.)
 
         resp = self.c.get(reverse('annotations',args=[self.dummy.id]) + "?csv")
+        # the dict reader won't fill out keys for the missing entries
+        # verify each row has 7 fields
+        for l in resp.content.split('\r\n'):
+            if l.strip():
+                self.assertEqual(7, len(l.split(',')))
         x = list(unicode_csv_dict_reader(resp.content))
         self.assertEqual(3, len(x))
         by_title = dict( [(v['title'],v) for v in x] )
@@ -489,7 +527,7 @@ class AnnotationsTest(TestCase):
         Annotation.objects.get(map=self.dummy.id)
         self.assertEqual('yay', ann.content)
         # @todo verify error messages
-        
+
 
 class UtilTest(TestCase):
 
@@ -540,7 +578,7 @@ class LinkTest(TestCase):
             self.fail('\n'.join(failed))
         # make sure we checked something
         self.assertTrue(len(passed) > 0)
-        
+
     def test_verify(self):
         '''make sure test works with bad data'''
         links = {
@@ -560,8 +598,6 @@ class LinkTest(TestCase):
         self.assertEqual(expected, failed)
 
     def _verify_links(self, links):
-        from bs4 import BeautifulSoup
-        import httplib2
         http = httplib2.Http()
         failed = []
         passed = []
@@ -619,3 +655,84 @@ class Oauth2ProviderTest(TestCase):
         account = json.loads(resp.content)
         self.assertEqual(int(account['id']), self.bobby.id)
         
+
+class FlagTest(TestCase):
+
+    fixtures = ('moderator_groups.json', 'test_data.json', 'map_data.json')
+    c = Client()
+
+    def setUp(self):
+        self.bobby = User.objects.get(username='bobby')
+        self.bobby.is_staff = True
+        self.bobby.set_password('bobby')
+        self.bobby.save()
+        self.layer = Layer.objects.create(owner=self.bobby, name='layer1',typename='layer1')
+        self.map = Map.objects.create(owner=self.bobby, zoom=1, center_x=0, center_y=0, title='map1')
+        self.layer_comment = comment_on(self.layer, self.bobby, 'layer comment')
+        self.map_comment = comment_on(self.map, self.bobby, 'map comment')
+        self.flag(self.layer, 'layer flag inappropriate','inappropriate')
+        self.flag(self.layer, 'layer flag broken', 'broken')
+        self.flag(self.map, 'map flag inappropriate', 'inappropriate')
+        self.flag(self.map, 'map flag broken', 'broken')
+        self.flag(self.map_comment, 'bad comment', 'inappropriate')
+        self.content_moderator = Group.objects.get(name='content_moderator')
+        self.dev_moderator = Group.objects.get(name='dev_moderator')
+
+    def tearDown(self):
+        # cleanup for other tests
+        self.c.logout()
+
+    def flag(self, what, comment, flag_type):
+        ct = ContentType.objects.get_for_model(what)
+        add_flag(self.bobby, ct, what.pk, self.bobby, comment, status=None,
+                 flag_type=flag_type)
+
+    def assert_flaginstance_admin_html(self, user, group,
+            expected_rows, flag_type=None):
+        if group:
+            user.groups.clear()
+            user.groups.add(group)
+        resp = self.c.get('/admin/flag/flaginstance', follow=True)
+        content = BeautifulSoup(resp.content)
+        rows = content.select('#result_list tbody tr')
+        self.assertEqual(expected_rows, len(rows))
+        if flag_type:
+            flag_types = [ r.contents[7].string for r in rows ]
+            self.assertTrue(all([s == flag_type for s in flag_types]))
+        return rows
+
+    def test_admin_filtering(self):
+        assert self.c.login(username='admin',password='admin')
+        rows = self.assert_flaginstance_admin_html(None, None, 5)
+        # test our urls - they should allow the user to get back to the problem
+        expected_urls = ['/maps/2#comment-2', '/maps/2', '/maps/2', '/data/layer1', '/data/layer1']
+        urls = [ r.contents[8].contents[0]['href'] for r in rows ]
+        self.assertEqual(expected_urls, urls)
+
+        self.c.logout()
+        assert self.c.login(username='bobby', password='bobby')
+
+        self.assert_flaginstance_admin_html(self.bobby, self.content_moderator,
+                                            3, 'inappropriate')
+        self.assert_flaginstance_admin_html(self.bobby, self.dev_moderator,
+                                            2, 'broken')
+
+    def test_email_delivery(self):
+        drain_mail_queue()
+        self.bobby.is_staff = False
+        self.bobby.save()
+        self.bobby.groups.clear()
+        self.flag(self.layer, 'layer inappropriate', 'inappropriate')
+        self.flag(self.layer, 'layer inappropriate', 'broken')
+        mail = drain_mail_queue()
+        self.assertEqual(2, len(mail))
+        for message in mail:
+            self.assertEqual([u'admin@admin.admin'], message.email.recipients())
+
+        self.bobby.groups.add(self.dev_moderator)
+        self.flag(self.layer, 'layer inappropriate', 'inappropriate')
+        self.flag(self.layer, 'layer inappropriate', 'broken')
+        mail = drain_mail_queue()
+        self.assertEqual(2, len(mail))
+        self.assertTrue('bobby@bob.com' not in mail[0].email.recipients())
+        self.assertTrue('bobby@bob.com' in mail[1].email.recipients())

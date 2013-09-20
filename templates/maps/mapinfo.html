@@ -22,6 +22,20 @@ div.timeline-highlight-point-decorator {
 #msmap .x-panel-tbar {
     display: none;
 }
+.gxp-annotations-tip {
+    max-width: 200px;
+}
+.gxp-annotations-tip-body {
+    max-height: 375px;
+    max-width: 185px;
+    overflow-y: auto;
+}
+body.ms-fullscreen .gxp-annotations-tip-body {
+    max-width: 485px;
+}
+body.ms-fullscreen .gxp-annotations-tip {
+    max-width: 500px;
+}
 </style>
 {% include "geonode/app_header.html" %}
 {% include "geonode/geo_header.html" %}
@@ -120,7 +134,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                     </div>
                     <div class="video-actions tabbable">
                         <ul class="actions-links nav nav-tabs fancyfont">
-                            <li><a href="#describemap" class="icn info active" data-toggle="pill">Info</a></li>
+                            <li class="active"><a href="#describemap" class="icn info" data-toggle="pill">Info</a></li>
                             <li><a href="#actions2" class="icn layers" data-toggle="pill">Layers</a></li>
 <!--                            <a href="#" class="icn favorites">Add to Favorites</a>-->
                             <li><a href="#actions3" class="icn share" data-toggle="pill">Share</a></li>
@@ -130,7 +144,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                         
                     </div>
                     <div class="video-actions tab-content">
-                        <div class="tab-pane" id="describemap">
+                        <div class="tab-pane active" id="describemap">
                             {% has_obj_perm user map "maps.change_map" as can_change %}
                             {% if can_change %}
                             <form id="info-form" method="POST" action="{% url geonode.maps.views.map_controller map.id %}?describe">
@@ -141,7 +155,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                             <label>Keywords:</label>
                             <textarea name="map-keywords">{{map.keyword_list|join:" "}}</textarea>
                             <label>Abstract:</label>
-                            <textarea name="map-abstract">{{map.abstract}}</textarea>
+                            <textarea rows="8" name="map-abstract">{{map.abstract}}</textarea>
                             <div>
                                 <button class="btn" id="submit">Update Information</button>
                             </div>
@@ -150,10 +164,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                             <hr/>
                             {% topic_selection map %}
                             <hr/>
-                            <img class="thumbnail" style="float:right" src="{{ map.get_thumbnail_url }}">
-                            <p>Generate a thumbnail for this MapStory</p>
-                            <a id="set_thumbnail" class="btn" href="#thumbnail">{% trans "Set thumbnail" %}</a>
-                            <div class="clearfix"></div>
+                            {% thumbnail_widget map %}
                             <hr/>
                             {% publish_status map %}
                             <p id="meta_data_status" style="display:none" class="alert alert-warning mrg-top" >
@@ -187,12 +198,12 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                             <textarea><iframe style="border: none;" height="400" width="600" src="http://{{ request.get_host }}{% url geonode.maps.views.embed map.id %}"></iframe></textarea>
                         </div>
                         <div class="tab-pane flag" id="actions4">
-                            Flag this as inappropriate, broken, or otherwise.
-                            {% flag map "owner" %}
+                            {% flag_widget map %}
                         </div>
                         <div class="tab-pane" id="actions5">
                             {% if user.is_authenticated %}
                             {% add_to_favorites map %}
+                            <div id="add-to-feedback">&nbsp;</div>
                             {% else %}
                             <p>Login to add to your favorites list.</p>
                             {% endif %}
@@ -229,6 +240,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
 {% block extra_body %}
 {% if request.user.is_authenticated %}
 	{% user_rating_js request.user map "map" %}
+    <script src="{% static "script/flag_helper.js" %}"></script>
 {% else %}
 	<script src="{% static "agon_ratings/js/jquery.raty.js" %}"></script>
 {% endif %}

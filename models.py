@@ -5,12 +5,12 @@ import os
 import re
 import logging
 import time
-import urlparse
-import urllib
+import urllib2
 import json
 
 from django.conf import settings
 from django.contrib.gis.db import models as gis
+from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import models
@@ -23,7 +23,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.urlresolvers import reverse
-from django.template import defaultfilters
 from django.utils.hashcompat import md5_constructor
 
 from django.contrib.auth.models import User
@@ -40,6 +39,7 @@ from geonode.upload.signals import upload_complete
 
 from mapstory import gwc_config
 from mapstory.util import parse_date_time
+from mapstory.util import slugify
 
 from avatar.signals import avatar_updated
 from hitcount.models import HitCount
@@ -186,8 +186,7 @@ class Section(models.Model):
         return self._children(Layer, publish__status=PUBLISHING_STATUS_PUBLIC)
     
     def save(self,*args,**kw):
-        slugtext = self.name.replace('&','and')
-        self.slug = defaultfilters.slugify(slugtext)
+        self.slug = slugify(self.name)
         if self.order is None:
             self.order = self.id
         models.Model.save(self)
@@ -339,12 +338,14 @@ class ContactDetail(Contact):
         cnt = self.user.avatar_set.count()
         if cnt > 0: return True
         md5 = md5_constructor(self.user.email).hexdigest()
-        url = "http://en.gravatar.com/%s.json" % md5
-        # @todo be nicer if this fails?
-        resp = urllib.urlopen(url)
-        obj = json.loads(resp.read())
-        if isinstance(obj, basestring):
-            return False
+        # the d param forces a 404 if missing, otherwise the default comes back
+        url = "http://www.gravatar.com/avatar/%s?d=404" % md5
+        try:
+            urllib2.urlopen(url)
+        except urllib2.HTTPError, hte:
+            if hte.code == 404:
+                return False
+            raise hte
         return True
 
     def update_audit(self):
@@ -397,13 +398,8 @@ class Org(ContactDetail):
         if not self.name:
             self.name = self.organization
         if not self.slug:
-            self.slug = Org.slugify_org(self.organization)
+            self.slug = slugify(self.organization)
         models.Model.save(self)
-
-    @staticmethod
-    def slugify_org(text):
-        slugtext = text.replace('&','and')
-        return defaultfilters.slugify(slugtext)
 
     def get_link(self, link_id):
         try:
@@ -443,8 +439,7 @@ class Resource(models.Model):
     ribbon_links = models.ManyToManyField(Link, blank=True, related_name='resource_ribbon_links_set')
 
     def save(self,*args,**kw):
-        slugtext = self.name.replace('&','and')
-        self.slug = defaultfilters.slugify(slugtext)
+        self.slug = slugify(self.name)
         if self.order is None:
             self.order = self.id
         models.Model.save(self)
@@ -637,6 +632,48 @@ class Annotation(models.Model):
     @property
     def end_time_str(self):
         return self._timefmt(self.end_time) if self.end_time else ''
+
+
+class Essay(models.Model):
+
+    author_name = models.CharField(max_length=64)
+    title = models.CharField(max_length=64)
+    content = models.TextField()
+    author_photo = models.URLField(blank=True)
+    publish = models.BooleanField(default=False)
+    slug = models.SlugField(blank=True, max_length=70)
+
+    def get_html(self):
+        from django.contrib.markup.templatetags import markup
+        key = self._cache_key()
+        val = cache.get(key)
+        if val is None:
+            val = markup.textile(self.content)
+        cache.set(key, val, 3600)
+        return val
+
+    def validate_photo(self, url=None):
+        check = url or self.author_photo
+        if check:
+            try:
+                resp = urllib2.urlopen(check)
+            except urllib2.URLError:
+                raise ValidationError('Unable to access author_photo URL : %s' % check)
+
+    def save(self, *args, **kw):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Essay, self).save(*args, **kw)
+        self.clear_cache()
+
+    def _cache_key(self):
+        return 'essay_html_%s' % self.pk
+
+    def clear_cache(self):
+        cache.delete(self._cache_key())
+
+    def get_absolute_url(self):
+        return reverse('essay', args=[self.slug])
 
 
 def audit_layer_metadata(layer):

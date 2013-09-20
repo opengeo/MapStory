@@ -235,27 +235,14 @@ def add_to_favorites(obj):
     return template % (url,text)
 
 
-@register.tag
-def add_to_map(parse, token):
-    try:
-        tokens = token.split_contents()
-        tag_name = tokens.pop(0)
-        obj_name = tokens.pop(0)
-    except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
-    return AddToMapNode(obj_name)
-
-class AddToMapNode(template.Node):
-    def __init__(self,obj_name):
-        self.obj_name = obj_name
-    def render(self, context):
-        layer = context[self.obj_name]
-        user = context['user']
-        template_name = 'mapstory/_widget_add_to_map.html'
-        return loader.render_to_string(template_name,{
-            'maps' : PublishingStatus.objects.get_in_progress(user,Map), # user.map_set.all()
-            'layer' : layer
-        })
+@register.simple_tag(takes_context=True)
+def add_to_map(context, layer):
+    user = context['user']
+    template_name = 'mapstory/_widget_add_to_map.html'
+    return loader.render_to_string(template_name,{
+        'maps' : PublishingStatus.objects.get_in_progress(user,Map),
+        'layer' : layer
+    })
 
 
 @register.simple_tag
@@ -421,11 +408,12 @@ def warn_status(req, obj):
         return loader.render_to_string('maps/_warn_status.html', {})
     return ""
 
-@register.simple_tag
-def warn_missing_thumb(obj):
-    if not obj.get_thumbnail():
-        return loader.render_to_string('maps/_warn_thumbnail.html', {})
-    return ""
+
+@register.inclusion_tag('maps/_widget_thumbnail.html')
+def thumbnail_widget(obj):
+    obj.display_name = 'StoryLayer' if isinstance(obj, Layer) else 'MapStory'
+    return { 'obj': obj }
+
 
 @register.simple_tag
 def user_activity_email_prefs(user):
@@ -488,6 +476,7 @@ def ext_url(cat, name):
 def ext_url(cat, name):
     return resolve_link(cat, name)
 
+
 @register.simple_tag
 def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
     # if not provided, title could resolve to a defined title at some point
@@ -498,9 +487,22 @@ def ext_link(cat, name, text='', classes=None, rel=None, title=None, **kw):
     extra = ''.join([' %s="%s"' % i for i in kw.items()])
     return '<a href="%s"%s%s%s%s>%s</a>' % (url, classes, rel,  title, extra, text)
 
+
 @register.simple_tag
 def wiki_link(name, text='', title='', classes='', rel = ''):
     return ext_link('wiki', name, text=text, classes=classes, rel=rel, title=title, target='_blank')
+
+
+@register.simple_tag
+def wiki_help_link(name, text='', title='Learn More', classes=''):
+    classes = 'icon-question-sign icon-orange ' + classes
+    return ext_link('wiki', name, text=text, classes=classes, title=title, target='_')
+
+
+@register.inclusion_tag('maps/_widget_flag.html', takes_context=True)
+def flag_widget(context, flag_object):
+    return { 'flag_object': flag_object, 'request': context['request'] }
+
     
 @register.simple_tag
 def wiki_help_link(name, text='', title='Learn More', classes='', rel = ''):

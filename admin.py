@@ -1,14 +1,11 @@
 from mapstory.models import *
+from dialogos.models import Comment
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.contrib import admin
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
-from django.http import HttpResponse
 from django.core import urlresolvers
 from django.contrib.auth.admin import UserAdmin
-import csv
+from flag import admin as flag_admin
 
 from mapstory.reports.admin import export_via_model
 
@@ -150,6 +147,43 @@ class OrgAdmin(admin.ModelAdmin):
 class OrgContentAdmin(admin.ModelAdmin):
     pass
 
+
+class EssayForm(forms.ModelForm):
+    class Meta:
+        exclude = ('slug', )
+
+    def clean(self):
+        cleaned_data = super(EssayForm, self).clean()
+        if cleaned_data['publish'] and not cleaned_data.get('author_photo', None):
+            raise forms.ValidationError('Please provide an author_photo before publishing')
+        # only validate a photo update, can do bulk sanity checking elsewhere
+        updated_author_photo = cleaned_data.get('author_photo', None)
+        if updated_author_photo:
+            self.instance.validate_photo(url=updated_author_photo)
+        return cleaned_data
+
+
+def essay_link(obj):
+    url = obj.get_absolute_url()
+    return "<a href='%s'>Essay Page</a>" % url
+essay_link.allow_tags = True
+
+
+class EssayAdmin(admin.ModelAdmin):
+    list_display = ('id', 'author_name', 'title', essay_link, 'publish')
+    form = EssayForm
+
+
+flag_admin.register_group_to_flag_types(
+    ('dev_moderator', 'broken'),
+    ('content_moderator', 'inappropriate')
+)
+
+def resolve_comment_absolute_url(comment):
+    return comment.content_object.get_absolute_url() + "#comment-%s" % comment.id
+flag_admin.register_absolute_url_resolver(Comment, resolve_comment_absolute_url)
+
+
 #@hack the UserAdmin to enable sorting by date_joined
 UserAdmin.list_display += ('date_joined',)
 
@@ -162,3 +196,4 @@ admin.site.register(OrgContent, OrgContentAdmin)
 admin.site.register(Topic)
 admin.site.register(Link, LinkAdmin)
 admin.site.register(Annotation)
+admin.site.register(Essay, EssayAdmin)

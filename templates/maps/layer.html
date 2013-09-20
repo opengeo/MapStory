@@ -3,7 +3,6 @@
 {% load geonode_auth %}
 {% load mapstory_tags %}
 {% load dialogos_tags %}
-{% load flag_tags %}
 {% load agon_ratings_tags %}
 {% load staticfiles %}
 
@@ -192,11 +191,10 @@
                     {% has_obj_perm user layer "maps.change_layer" as can_change %}
                     <div class="video-actions tabbable">
                         <ul class="actions-links nav nav-tabs fancyfont">
-                            <li><a href="#describemap" class="icn info active" data-toggle="pill">Info</a></li>
+                            <li class="active"><a href="#describemap" class="icn info" data-toggle="pill">Info</a></li>
                             {% if can_change %}
                             <li><a href="#actions7" class="icn layers" data-toggle="pill">Style</a></li>
                             {% endif %}
-<!--                            <a href="#" class="icn favorites">Add to Favorites</a>-->
                             <li><a href="#actions3" class="icn share" data-toggle="pill">Share</a></li>
                             <li><a href="#actions4" class="icn flag" data-toggle="pill">Flag</a></li>
                             <li><a href="#actions5" class="icn add" data-toggle="pill">Add</a></li>
@@ -216,13 +214,13 @@
                             {% include "maps/_sharethis_links.html" %}
                         </div>
                         <div class="tab-pane flag" id="actions4">
-                            Flag this as inappropriate, broken, or otherwise.
-                            {% flag layer "owner" %}
+                            {% flag_widget layer %}
                         </div>
                         <div class="tab-pane" id="actions5">
                             {% if user.is_authenticated %}
                             {% add_to_favorites layer %}
                             {% add_to_map layer %}
+                            <div id="add-to-feedback">&nbsp;</div>
                             {% else %}
                             <p>Login to add to your favorites list.</p>
                             {% endif %}
@@ -244,9 +242,9 @@
                             <hr>
                             <h4>Or The Styles This StoryLayer Uses:</h4>
                             <span class="styles-list">
-                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download {{layer.publishing.default_style.name}}</a><br/>
+                                <a download="{{ layer.default_style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download {{layer.default_style.name}}</a><br/>
                                 {% for style in layer.styles %} 
-                                    <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download
+                                    <a download="{{ style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download
                                     {% if style.sld_title %}
                                         {{ style.sld_title }}
                                      {% else %}
@@ -269,15 +267,15 @@
                             {% else %}
                             <div id="style-preview" class="styles-list">
                                 <h4>Change Style (Preview)</h4>
-                                <input type="radio" name="style" id="{{layer.publishing.default_style.name}}" value="{{layer.publishing.default_style.name}}" checked="checked"/>
-                                <label for="{{layer.publishing.default_style.name}}" class="style-title">
+                                <input type="radio" name="style" id="{{layer.default_style.name}}" value="{{layer.default_style.name}}" checked="checked"/>
+                                <label for="{{layer.default_style.name}}" class="style-title">
                                 {% if layer.default_style.sld_title %}
                                 {{ layer.default_style.sld_title }}
                                 {% else %}
                                 {{ layer.default_style.name|title }}
                                 {% endif %}
                                 </label>
-                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download SLD</a><br/>
+                                <a download="{{ layer.default_style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ layer.default_style.name }}.sld">Download SLD</a><br/>
                                 {% for style in layer.styles %} 
                                 <input type="radio" name="style" id="{{style.name}}" value="{{style.name}}"/>
                                 <label for="{{style.name}}" class="style-title">
@@ -287,14 +285,14 @@
                                 {{ style.name|title }}
                                 {% endif %}
                                 </label>
-                                <a target="dlframe" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download SLD</a><br/>
+                                <a download="{{ style.name }}.sld" href="{{ GEOSERVER_BASE_URL }}styles/{{ style.name }}.sld">Download SLD</a><br/>
                                 {% endfor %}
                             </div>
                             <hr>
                             <h4>Set Default Style</h4>
                             <select name="default-style">
-                            <option value="{{layer.publishing.default_style.name}}" selected="selected">
-                              {{layer.publishing.default_style.name|title}}
+                            <option value="{{layer.default_style.name}}" selected="selected">
+                              {{layer.default_style.name|title}}
                             </option>
                             {% for style in layer.styles %} 
                                 <option value="{{style.name}}"> {{ style.name|title }} </option>
@@ -361,6 +359,7 @@
 {% block extra_body %}
 {% if request.user.is_authenticated %}
 	{% user_rating_js request.user layer "layer" %}
+    <script src="{% static "script/flag_helper.js" %}"></script>
 {% else %}
 	<script src="{% static "agon_ratings/js/jquery.raty.js" %}"></script>
 {% endif %}
