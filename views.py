@@ -33,11 +33,15 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template import loader
 from django.template import defaultfilters as filters
 from django.contrib.contenttypes.models import ContentType
+
+from provider.oauth2.models import AccessToken
+from django.utils.timezone import now as provider_now
 
 
 from lxml import etree
@@ -845,3 +849,31 @@ def render_email(request):
     else:
         mime = "text/html"
     return render_to_response(t, RequestContext(request,{'user': {'first_name': 'FIRST NAME'}}), mimetype=mime)
+
+def account_verify(request):
+
+    access_token = request.GET.get('access_token', '')
+
+    if not access_token:
+        auth = request.META.get('HTTP_AUTHORIZATION', b'')
+        if type(auth) == type(''):
+            # Work around django test client oddness
+            auth = auth.encode('iso-8859-1')
+        auth = auth.split()
+        if auth and auth[0].lower() == 'bearer':
+            access_token = auth[1]
+
+    try:
+        token = AccessToken.objects.select_related('user')
+        token = token.get(token=access_token, expires__gt=provider_now())
+    except AccessToken.DoesNotExist:
+        msg = 'No access token'
+        return HttpResponseForbidden(msg)
+
+    user = token.user
+
+    if not user.is_active:
+        msg = 'User inactive or deleted: %s' % user.username
+        return HttpResponseForbidden(msg)
+    return HttpResponse('{"id":"%s","first_name":"%s","last_name":"%s","username":"%s","email":"%s"}' 
+            % (user.id, user.first_name, user.last_name, user.username, user.email), mimetype='application/json')

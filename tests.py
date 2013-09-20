@@ -589,3 +589,33 @@ class LinkTest(TestCase):
                         failed.append((name, url, 'could not locate fragment: %s' % parts.fragment))
                 passed.append(name)
         return passed, failed
+
+class Oauth2ProviderTest(TestCase):
+    fixtures = ['test_data.json','map_data.json']
+    c = Client()
+
+    def setUp(self):
+        from provider.oauth2.models import AccessToken, Client
+        self.bobby = User.objects.get(username='bobby')
+        self.admin = User.objects.get(username='admin')
+        self.client = Client.objects.create(client_type = 1)
+        self.token = AccessToken.objects.create(user=self.bobby, client=self.client)
+
+    def test_account_verify_error(self):
+        url = reverse('account_verify')
+        resp = self.c.get(url) 
+        self.assertEqual(resp.status_code, 403)
+        resp = self.c.get(url, {'access_token': self.token.token[1:]})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_account_verify_token(self):
+        url = reverse('account_verify')
+        resp = self.c.get(url, {'access_token': self.token.token})
+        account = json.loads(resp.content)
+        self.assertEqual(int(account['id']), self.bobby.id)
+
+        url = reverse('account_verify')
+        resp = self.c.get(url, HTTP_AUTHORIZATION='Bearer ' + self.token.token)
+        account = json.loads(resp.content)
+        self.assertEqual(int(account['id']), self.bobby.id)
+        
