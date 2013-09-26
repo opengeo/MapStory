@@ -1,5 +1,5 @@
 from django import template
-from django.template import loader
+from django.template import loader, Variable, VariableDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Page
 from django.core.urlresolvers import reverse
@@ -519,3 +519,8 @@ else:
     @register.simple_tag
     def geonode_static(path):
         return staticfiles.static(geonode_static_prefix + path)
+
+
+@register.filter
+def getthatattr(object, attr):
+    return getattr(object,attr, None)
