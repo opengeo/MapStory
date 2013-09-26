@@ -1265,6 +1265,12 @@ cite {
     padding-top:5px;
 }
 
+#comment_parent_text {
+    font-style: italic;
+    padding: 5px 10px 15px 10px;
+    color: grey;
+}
+
 .pages {
   font-weight:bold;
   font-size:11px;
