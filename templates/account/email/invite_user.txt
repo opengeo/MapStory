@@ -1,8 +1,9 @@
+{% load mapstory_tags %}
+
 {{ signup_code.inviter }} ({{signup_code.inviter.email}}) has
 invited you to join MapStory ( http://{{ current_site.domain }} )!
 
-Just click the following link to get started:
-{{ signup_url }}
+Just click this <a href="{{ signup_url }}">link</a> to get started.
 
 You have been invited to join the MapStory community.  MapStory
 empowers a global community to organize its knowledge about the
@@ -13,8 +14,7 @@ understanding of global dynamics, worldwide, over the course of
 history.  Like Wikipedia, all data that you add to  MapStory is
 contributed to the global data commons.  For more details, the
 MapStory license and copyright can be read here. per the terms in
-this license:
-{% ext_link 'wiki' 'license_and_copyright' %} 
+this {% ext_link 'wiki' 'license_and_copyright' 'license' %}.
 
 
 Please do not reply to this e-mail.  If you have questions about
