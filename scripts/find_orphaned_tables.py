@@ -9,9 +9,17 @@ from geonode.maps.models import Layer
 from script_utils import open_db_datastore_connection
 import sys
 
+def msg(msg, star=None):
+    if star:
+        print '*' * star, msg, '*' * star
+        print
+    else:
+        print msg
+        print '-' * len(msg)
+
 run = 'run' in sys.argv
 if not run:
-    print 'DRY RUN ONLY!'
+    msg('DRY RUN ONLY!', star=8)
 conn = open_db_datastore_connection()
 cur = conn.cursor()
 cur.execute("SELECT f_table_name from geometry_columns")
@@ -38,16 +46,19 @@ for l in Layer.objects.all():
     else:
         tables.remove(table)
 
-print 'no table'
-print '-' * 8
-for i in no_table:
+msg('Layer objects w/ no table')
+if not no_table:
+    msg('None', star=2)
+for i in sorted(no_table):
     print i
     if run:
         i.delete()
 
-print 'no layer'
-print '-' * 8
-for i in tables:
+print
+msg('Geometry tables with no Layer')
+if not tables:
+    msg('None', star=2)
+for i in sorted(tables):
     print i
     if run:
         cur.execute('DROP TABLE IF EXISTS %s;' % i)
