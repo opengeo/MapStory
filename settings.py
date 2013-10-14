@@ -231,6 +231,7 @@ INSTALLED_APPS = (
     'django.contrib.webdesign',
     'django.contrib.staticfiles',
     'django.contrib.messages',
+    'django.contrib.markup',
     'django_extensions',
     'announcements',
     'flatblocks',

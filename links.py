@@ -6,6 +6,7 @@ links = {
             ("curation_guide_flag_broken", "Curation_Guide#Flagging_Content_as_Broken"),
             ("curation_guide_flag_inappropriate", "Curation_Guide#Flagging_Content_as_Inappropriate"),
             ("curation_guide_title", "Curation_Guide#Title"),
+            ("curation_guide_description", "Curation_Guide#Description"),
             ("curation_guide_keywords", "Curation_Guide#Keywords"),
             ("curation_guide_abstract", "Curation_Guide#Abstract"),
             ("curation_guide_purpose", "Curation_Guide#Purpose"),
