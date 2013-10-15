@@ -8,7 +8,7 @@ div.gx-overlay-playback .x-btn-icon .x-btn-large .x-btn-text, .x-btn-noicon .x-b
     width: 34px;
 }
 .x-btn-icon .x-btn-medium .x-btn-text, .x-btn-noicon .x-btn-medium .x-btn-text {
-    width: 34px;
+    width: 28px;
 }
 /*** Playback toolbar positioning ***/
 div.gx-playback-wrap div.gx-overlay-playback{
@@ -76,6 +76,7 @@ div.gx-playback-wrap .x-btn-pressed td button:hover{
 }
 
 .x-btn button.gxp-icon-ffwd, .x-btn button.gxp-icon-play2x{
+    width: 34px !important;
     background-image:url('img/icons/large/2x.png')
 }
 
