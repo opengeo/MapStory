@@ -1,21 +1,25 @@
 {% extends "messages/base.html" %} 
 {% load i18n %} 
 {% block content %}
-<h1>{% trans "View Message" %}</h1>
-<dl class="message-headers">
-    <dt>{% trans "Subject" %}</dt>
-    <dd><strong>{{ message.subject }}</strong></dd>
-    <dt>{% trans "Sender" %}</dt>
-    <dd>{{ message.sender }}</dd>
-    <dt>{% trans "Date" %} </dt>
-    <dd>{{ message.sent_at|date:_("DATETIME_FORMAT")}}</dd>
-    <dt>{% trans "Recipient" %}</dt>
-    <dd>{{ message.recipient }}</dd>
-</dl>
-{{ message.body|linebreaksbr }}<br /><br />
+<div id="main" class="messages">
+    <h1>{% trans "Messages" %}</h1>
+    <div id="sidebar" class="messages">
+        <ul class="subnavilist">
+            <li><a class="btn btn-danger" href="{% url messages_compose %} ">{% trans "New Message" %}</a></li>
+            <li><a href="{% url messages_inbox %} ">{% trans "Inbox" %}</a></li>
+            <li><a href="{% url messages_outbox %} ">{% trans "Sent Messages" %}</a></li>
+            <li><a href="{% url messages_trash %} ">{% trans "Trash" %}</a></li>
+        </ul>
+    </div>
+    <div id="container">
+        <h2>{{ message.subject }}</h2>
+        <div id="info"><a href="">{{ message.sender }}</a><span id="date">{{ message.sent_at|date:_("DATETIME_FORMAT")}}</span></div>
+        {{ message.body|linebreaksbr }}<br /><br />
 
-{% ifequal message.recipient.pk user.pk %}
-<a href="{% url messages_reply message.id %}">{% trans "Reply" %}</a>
-{% endifequal %}
-<a href="{% url messages_delete message.id %}">{% trans "Delete" %}</a>
+        {% ifequal message.recipient.pk user.pk %}
+        <a class="btn" href="{% url messages_reply message.id %}">{% trans "Reply" %}</a>
+        {% endifequal %}
+        <a class="btn" href="{% url messages_delete message.id %}"><i class="icon-trash"></i> {% trans "Delete" %}</a>
+    </div>
+</div>
 {% endblock %}
