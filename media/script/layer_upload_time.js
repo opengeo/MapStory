@@ -29,7 +29,7 @@ Ext.onReady(function() {
         }
     });
     
-    Ext.get('hasend').select('.yesno input').on('click',function() {
+    Ext.get('hasend').select('input').on('click',function() {
         if (/yes/.exec(this.id)) {
             show('endtimeopts');
         } else {
@@ -179,7 +179,7 @@ Ext.onReady(function() {
     function checkAndClear(id, othersection) {
         var section = Ext.get(id);
         var clear = false;
-        section.select('.yesno input').each(function(i) {
+        section.select('input').each(function(i) {
             if (i.getAttribute('checked')) {
                 clear = i.id.indexOf('no') == 0;
             }
