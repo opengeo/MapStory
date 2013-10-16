@@ -101,6 +101,10 @@ urlpatterns = patterns('',
 
 )
 
+urlpatterns += patterns('',
+    url(r'^messages/', include('django_messages.urls')),
+)
+
 urlpatterns += patterns('mapstory.views',
     (r'^(?:index/?)?$', 'index'),
 
@@ -216,6 +220,7 @@ if settings.ENABLE_SOCIAL_LOGIN:
         url(r'', include('social_auth.urls')),
         url(r'^oauth2/', include('provider.oauth2.urls', namespace = 'oauth2')),
     )
+
 
 # Extra static file endpoint for development use
 if settings.SERVE_MEDIA:

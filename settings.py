@@ -256,6 +256,7 @@ INSTALLED_APPS = (
     'actstream',
     'mailer',
     'oembed',
+    'django_messages',
 )
 
 def get_user_url(u):

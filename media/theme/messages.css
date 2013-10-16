@@ -1,0 +1,64 @@
+.messages#main h1 {
+    font-size: 25px;
+    margin: 10px 0 20px 0;
+    color: #F46817;
+}
+
+.messages#main #sidebar {
+    float:left;
+    width: 200px;
+    padding: 20px;
+    margin: 0 20px 20px 0;
+    background: white;
+}
+
+.messages#main #container {
+    float:left;
+    width: 678px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: white;
+}
+
+.messages#main #container strong {
+    font-weight: bold;
+}
+
+.messages#main #container th {
+    font-weight: bold;
+}
+
+.messages#main #container #info {
+    margin-bottom:15px;
+}
+.messages#main #container #info #date {
+    float:right;
+}
+
+.messages#main #container table {
+    width: 100%;
+}
+
+.messages#main #container textarea {
+    width: 100%;
+}
+
+.messages#main #container input {
+    width: 100%;
+}
+
+.messages#main #container .twitter-typeahead {
+    width: 100%;
+}
+
+.messages#main #container tbody tr {
+    border-top: 1px solid #4a4a4a;
+}
+
+.messages#main #container tbody tr a {
+    font-weight: inherit;
+}
+
+.messages#main #container form tr {
+    border-top: 0;
+}
