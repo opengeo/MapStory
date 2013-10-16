@@ -93,7 +93,8 @@ div.gx-playback-wrap .x-btn-pressed td button:hover{
 }
 
 .x-btn button.gxp-icon-legend{
-    background-image:url('img/icons/large/legend_btn.png')
+    background-image:url('img/icons/large/legend_btn.png');
+    background-position: 0px -9px !important;
 }
 
 .x-btn button.gxp-icon-editMap{
