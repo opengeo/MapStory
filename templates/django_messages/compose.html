@@ -30,12 +30,13 @@
 <script>
 $(function() {
     var authors = "/search/api/authors",
-        t = $('#id_recipient').typeahead();
+        t = $('#id_recipient').typeahead(),
         ti = t.data('typeahead'),
-        lookup = ti.lookup;
+        lookup = ti.lookup,
+        user;
     t.attr('autocomplete','off');
-    // patch in ajax lookup
-    ti.lookup = function() {
+    // patch in ajax lookup and allow for callback func
+    ti.lookup = function(func) {
         var q = this.$element.val();
         $.getJSON(authors, {"query": q, 'fullname': 1}, function(data) {
             ti.names = data['names'];
@@ -43,6 +44,7 @@ $(function() {
                 return pair['display'] + (pair['display'].length ? ' ' : '') + '[ ' + pair['username'] + ' ] ';
             });
             lookup.apply(ti, arguments);
+            func && func();
         });
         return this;
     };
@@ -64,6 +66,12 @@ $(function() {
     t.attr('placeholder', 'Enter name or username');
     $('#id_subject').attr('placeholder', 'Enter subject');
     $('#id_body').attr('placeholder', 'Enter message');
+    user = /to=(.*)/.exec(window.location.search)[1];
+    if (user) {
+        t.val(user);
+        // select on callback from ajax
+        ti.lookup(function() { ti.select(); });
+    }
 });
 </script>
 {% endblock %}
