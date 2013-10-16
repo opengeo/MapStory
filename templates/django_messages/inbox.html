@@ -1,4 +1,4 @@
-{% extends "messages/base.html" %} 
+{% extends "django_messages/base.html" %} 
 {% load i18n %} 
 {% block content %}
 <div id="main" class="messages">
@@ -27,14 +27,13 @@
                     {% if message.new %}</strong>{% endif %}</td>
                 <td>
                     {% if message.new %}<strong>{% endif %}
-                    {% if message.replied %}<em>{% endif %}
                     <a href="{{message.get_absolute_url }}">{{ message.subject }}</a>
-                    {% if message.replied %}</em>{% endif %}
+                    {% if message.replied %}<i class="icn icon-share-alt" title="Replied to"></i>{% endif %}
                     {% if message.new %}</strong>{% endif %}</td>
                 <td>{% if message.new %}<strong>{% endif %}
                     {{ message.sent_at|date:_("DATETIME_FORMAT") }}</td>
                     {% if message.new %}</strong>{% endif %}</td>
-                <td><a href="{% url messages.views.delete message.id %}"><i class="icon-trash"></i></a></td>
+                <td><a href="{% url messages_delete message.id %}"><i class="icon-trash"></i></a></td>
             </tr>
         {% endfor %}
             </tbody>

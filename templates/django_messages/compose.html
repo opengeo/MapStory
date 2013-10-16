@@ -1,0 +1,69 @@
+{% extends "django_messages/base.html" %} 
+{% load i18n %} 
+{% load staticfiles %}
+{% block content %} 
+<div id="main" class="messages">
+<h1>{% trans "Messages"%}</h1>
+    <div id="sidebar" class="messages">
+        <ul class="subnavilist">
+            <li><a class="btn btn-danger" href="{% url messages_compose %} ">{% trans "New Message" %}</a></li>
+            <li><a href="{% url messages_inbox %} ">{% trans "Inbox" %}</a></li>
+            <li><a href="{% url messages_outbox %} ">{% trans "Sent Messages" %}</a></li>
+            <li><a href="{% url messages_trash %} ">{% trans "Trash" %}</a></li>
+        </ul>
+    </div>
+    <div id="container">
+        <h2>Compose Message</h2>
+        <form id="message-form" action="" method="post">
+            {% csrf_token %}
+        <table>
+        {{ form.as_table }}
+        </table>
+        <input type="submit" value="{% trans "Send" %} &raquo;"/>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script type="text/javascript" src="{% static "bootstrap/js/bootstrap-typeahead.js" %}"></script>
+<script>
+$(function() {
+    var authors = "/search/api/authors",
+        t = $('#id_recipient').typeahead();
+        ti = t.data('typeahead'),
+        lookup = ti.lookup;
+    t.attr('autocomplete','off');
+    // patch in ajax lookup
+    ti.lookup = function() {
+        var q = this.$element.val();
+        $.getJSON(authors, {"query": q, 'fullname': 1}, function(data) {
+            ti.names = data['names'];
+            ti.source = $.map(ti.names, function(pair) {
+                return pair['display'] + (pair['display'].length ? ' ' : '') + '[ ' + pair['username'] + ' ] ';
+            });
+            lookup.apply(ti, arguments);
+        });
+        return this;
+    };
+    // get selected username
+    ti.getUserName = function() {
+        var q = this.$element.val();
+        for (var i in self.names) {
+            if (self.names[i].display == q) {
+                return self.names[i].username;
+            }
+        }
+    };
+    $('#message-form').submit(function(ev) {
+        // before submitting, extract username
+        var username = /\[ (.*) \]/.exec(ti.$element.val())[1];
+        $('#id_recipient').val(username);
+    });
+    $('#message-form input[type=submit]').addClass('btn');
+    t.attr('placeholder', 'Enter name or username');
+    $('#id_subject').attr('placeholder', 'Enter subject');
+    $('#id_body').attr('placeholder', 'Enter message');
+});
+</script>
+{% endblock %}

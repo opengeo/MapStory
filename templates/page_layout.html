@@ -48,7 +48,7 @@
                     <a id="AskbotAskButton" class="orange" href="#">FEEDBACK</a>
                     <a title="About You, The StoryTeller" href="{% url about_storyteller user.username %}">
                         {% if user.get_profile %}{{ user.get_profile.display_name }}{% else %}{{ user.username }}{% endif %}</a>
-                    <a href="{% url messages_inbox %}"><i class="icon-envelope icon-white"></i>
+                    <a style="vertical-align: middle" title="Messaging" href="{% url messages_inbox %}"><i class="icon-envelope icon-white"></i>
                         {% inbox_count as inbox  %}
                         {% if inbox != 0 %}
                         <b> {{inbox}}</b>
