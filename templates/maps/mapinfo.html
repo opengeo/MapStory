@@ -6,6 +6,7 @@
 {% load dialogos_tags %}
 {% load flag_tags %}
 {% load agon_ratings_tags %}
+{% load markup %}
 
 {% block title %}{{map.title}}{% endblock %}
 
@@ -157,7 +158,8 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                             <p>{{map.owner}}</p>
                             <label>Keywords:</label>
                             <textarea name="map-keywords">{{map.keyword_list|join:" "}}</textarea>
-                            <label>Abstract:</label>
+                            <label>Description:{% wiki_help_link 'curation_guide_description' %}</label>
+                            <span class="fh">Describe your MapStory in any way you find effective. A good description might answer some of the following questions: What is the purpose of this MapStory? Why did you decide to create it? What methods did you employ in creating it? What conclusions should a viewer take from it? What limits might it have that a viewer should keep in mind?</span>
                             <textarea rows="8" name="map-abstract">{{map.abstract}}</textarea>
                             <div>
                                 <button class="btn" id="submit">Update Information</button>
@@ -221,7 +223,7 @@ var thumbURL = "{% url geonode.maps.views.map_controller map.id %}?thumbnail";
                         </div>
                         {% endif %}
                     <cite>Uploaded by {{ map.owner.username }} on {{ map.last_modified|date:"N j Y" }}</cite>
-                    <article class="abstract"><label>Abstract:</label>{{ map.abstract|escape|urlize|linebreaks|safe }}</article>
+                    <article class="abstract"><label>Description:</label>{{ map.abstract|textile }}</article>
                 </div>
                 {% comments_section map %}
 

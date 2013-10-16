@@ -42,6 +42,8 @@ def _gwc_client():
 def _enable_wms_caching(layer, cache_secs, disable=False):
     '''This should go into gsconfig'''
     layer.resource.fetch()
+    # ensure we fetch stuff fresh or we'll overwrite
+    layer.catalog._cache.pop(layer.resource.href, None)
     dom = layer.resource.dom
     metadata = dom.find('metadata')
     if metadata is None:
@@ -61,6 +63,8 @@ def _enable_wms_caching(layer, cache_secs, disable=False):
             metadata.remove(entry)
     set_entry('cacheAgeMax', cache_secs)
     set_entry('cachingEnabled', 'false' if disable or cache_secs is 0 else 'true')
+    print tostring(dom)
+
     headers, resp = layer.resource.catalog.http.request(
         layer.resource.href, 'PUT', tostring(dom), {'content-type' : 'text/xml'})
     if headers.status != 200:

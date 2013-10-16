@@ -6,6 +6,7 @@ import os.path
 import json
 import optparse # for 2.6 support
 import os
+import re
 import sys
 
 os.environ['DJANGO_SETTINGS_MODULE'] = "mapstory.settings"
@@ -190,6 +191,29 @@ class UseVirtualOWSURL(ConfigMigration):
             config['capability']['name'] = m.name
             print 'adjusted capability name and prefix to %s' % m.name
             m.layer_params = json.dumps(config)
+
+
+class ConvertLinksInMapAbstract(ConfigMigration):
+
+    query_set = Map.objects.exclude(abstract__isnull=True)
+    pat = re.compile('http(s?)://\S+')
+
+    def process_model(self, m):
+        print 'processing %s, map=%s' % (m.title, m.id)
+        def fun(m):
+            s = m.group()
+            return '"%s":%s' % (s,s)
+        if not m.abstract: return
+        if not self.pat.search(m.abstract):
+            if 'http' in m.abstract:
+                print 'POTENTIAL MISSED LINK!!!'
+            return
+        neu, cnt = self.pat.subn(fun, m.abstract)
+        if not cnt: return
+        print
+        print 'adjusting abstract in %s' % m.get_absolute_url()
+        print neu
+        m.abstract = neu
 
 
 def _migrations():
