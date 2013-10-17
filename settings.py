@@ -215,7 +215,42 @@ MAP_BASELAYERS = [
         'group': 'background',
         'args': ['Satellite Imagery']
     },
-
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'natural-earth-1',
+        'title': 'Natural Earth',
+        'group': 'background'
+    },
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'natural-earth-2',
+        'title': 'Natural Earth 2',
+        'group': 'background'
+    },
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'geography-class',
+        'title': 'Geography Class',
+        'group': 'background'
+    },
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'world-light',
+        'title': 'World Light',
+        'group': 'background'
+    }
 ]
 
 # use new uploader
