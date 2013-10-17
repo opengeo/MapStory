@@ -17,6 +17,7 @@ from django.core import serializers
 from django.conf import settings
 from geonode.maps.models import MapLayer
 from geonode.maps.models import Map
+from geonode.maps.views import default_map_config
 
 
 class MigrationException(Exception):
@@ -152,6 +153,27 @@ class BaseLayerNameMigration(ConfigMigration):
         layer_params['args'][0] = new_name
         m.layer_params = json.dumps(layer_params)
         m.name = new_name
+
+
+class AddBaseLayersToExistingMaps(ConfigMigration):
+    'update base layers to existing maps'
+
+    def init(self):
+        self.query_set = MapLayer.objects.filter(group='background')
+        self.added = []
+
+    def run(self):
+        if not self.dry_run:
+            self.query_set.delete()
+        map_layers = []
+        _, templates = default_map_config(None)
+        for m in Map.objects.all():
+            for t in templates:
+                t.id = None
+                t.map = m
+                t.save()
+                map_layers.append(t.id)
+        print map_layers
 
 
 class RemoveMapProperties(ConfigMigration):
