@@ -186,7 +186,20 @@ MAP_BASELAYERS = [
         "fixed": True,
         "group":"background"
     },
-
+    {
+        "source": {"ptype":"gx_olsource"},
+        "type":"OpenLayers.Layer.OSM",
+        "args":["Humanitarian OpenStreetMap", [
+            "http://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+            "http://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+            "http://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"
+          ], {"tileOptions": {"crossOriginKeyword": None}}
+        ],
+        'title': 'This is the title',
+        "visibility": True,
+        "fixed": True,
+        "group":"background"
+    },
     {
         "source": {"ptype":"gx_olsource"},
         "type":"OpenLayers.Layer.WMS",
