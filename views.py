@@ -13,8 +13,9 @@ from mapstory.util import render_manual
 from mapstory.util import unicode_csv_dict_reader
 from mapstory.forms import AnnotationForm
 from mapstory.forms import CheckRegistrationForm
-from mapstory.forms import StyleUploadForm
+from mapstory.forms import LinkForm
 from mapstory.forms import LayerForm
+from mapstory.forms import StyleUploadForm
 import account.views
 
 from dialogos.models import Comment
@@ -742,9 +743,9 @@ def org_page(req, org_slug):
     using = models.get_maps_using_layers_of_user(org.user)
     ctx = dict(org=org, org_content=content[0].text if content else None,
                can_edit=req.user.is_superuser or req.user == org.user,
-               using=using
+               using=using, org_links=org.links.all().order_by('order'),
+               favs = models.Favorite.objects.bulk_favorite_objects(org.user)
                )
-    ctx['favs'] = models.Favorite.objects.bulk_favorite_objects(org.user)
     resp = render_to_response('mapstory/orgs/org_page.html', RequestContext(req, ctx))
     return resp
 
@@ -793,8 +794,8 @@ def resource_links(req, resource, link_type='links'):
 
 
 def _process_links(req, instance, template, link_type):
-    error = ''
     m2m = getattr(instance, link_type)
+    form = None
     if req.method == 'POST':
         if req.POST['id']:
             # before updating, make sure the object owns the link
@@ -805,20 +806,16 @@ def _process_links(req, instance, template, link_type):
         if 'delete' in req.POST:
             link.delete()
         else:
-            fields = ('name', 'href')
-            if not all([req.POST[f] for f in fields]):
-                error = 'Name and URL are required'
-            else:
-                fields += ('order',)
-                for k,v in [ (f, req.POST[f]) for f in fields]:
-                    if v: setattr(link, k, v)
-                link.save()
+            form = LinkForm(req.POST, instance=link)
+            if form.is_valid():
+                form.save()
                 m2m.add(link)
+    form = form or LinkForm()
     ctx = {
         'links' : m2m.all().order_by('order'),
         'link_type' : link_type,
         'obj' : instance,
-        'error' : error
+        'form' : form
     }
     return render_to_response(template, RequestContext(req, ctx))
 

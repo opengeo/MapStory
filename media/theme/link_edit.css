@@ -15,7 +15,8 @@
     background: graytext;
 }
 .tile:hover {
-    background: bisque;
+    outline: 2px solid bisque;
+    cursor: pointer;
 }
 #docs li {
     font-size: small;
@@ -23,4 +24,13 @@
 }
 #docs ul {
     margin-left: 2em;
+}
+#linkedit p {
+    margin-bottom: .5em;
+}
+#linkedit label {
+    display: inline;
+}
+#linkedit div {
+    height: 2.5em;
 }

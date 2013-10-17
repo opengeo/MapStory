@@ -3,47 +3,35 @@
 {% load mapstory_tags %}
 {% load staticfiles %}
 
-{% block title %}{{ org.name }}{% endblock %}
+{% block title %}{{ org.organization }}{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" type="text/css" href="{% static "theme/org_page.css" %}" media="screen" />
 {% endblock %}
 
 {% block main %}
-<div id="org-banner" class="box mrg-btm mrg-top">
-    {% edit_widget banner%}
-    <div class="banner_image" data-content="banner_image">
-        <img src="{{ org.banner_image }}" {% if not org.banner_image %}style="display:none"{% endif %}></img>
-        {% if not org.banner_image %}<h2 class="placeholder">Your Banner Image Goes Here</h2>{% endif %}
-    </div>
-</div>
-<div class="row mrg-btm">
-    <div class="span8">
-        <div class="box" id="orgcontent">
-            {% edit_widget content %}
-            <h2>{{ org.name }}</h2>
-            <div class="expandable" data-content="org_content">{{ org_content|default:"Your Content Goes Here"|escape|urlize|linebreaks|safe}}</div>
+<div class="row">
+    <div id="org-banner" class="span8 mrg-btm mrg-top">
+        {% edit_widget banner%}
+        <div class="banner_image" data-content="banner_image">
+            <img src="{{ org.banner_image }}" {% if not org.banner_image %}style="display:none"{% endif %}></img>
+            {% if not org.banner_image %}<h2 class="placeholder">Your Banner Image Goes Here</h2>{% endif %}
+            <h3>{{ org.organization }}</h3>
         </div>
     </div>
     <div class="span4">
-        <div class="box" id="orglinks">
-            {% if can_edit %}<a href="{% url org_links org.slug %}" class='btn btn-small pull-right' target="_">Edit</a>{% endif %}
-            <h2>Links and Resources</h3>
-            <ul data-content="org_links">
-                {% for l in org.links.all %}
-                <li id="org-link-{{ l.pk }}">{% render_link l %}</li>
-                {% endfor %}
-            </ul>
-        </div>
     </div>
 </div>
-<div id="mediabanner" class="box mrg-btm">
-    {% if can_edit %}<a href="{% url org_ribbon_links org.slug %}" class='btn btn-small pull-right' target="_">Edit</a>{% endif %}
-    
-    {% media_ribbon org.ribbon_links %}
-</div>
 
-<div>
+<div class="row">
+
+<div class="span8">
+    {% if can_edit %}
+    <div class="alert alert-info">Populate the StoryMaps and StoryLayers shown below
+        by adding to your favorites in the <a href="{% url new_search %}">Search</a> page.
+        [ This message will not appear to other users ]
+    </div>
+    {% endif %}
     <div id="org-tabs" class="tabbable">
         <ul class="nav nav-tabs fancyfont">
             {% if favs.map %}
@@ -107,6 +95,43 @@
         </div>
     </div>
 </div>
+    <div class="span4">
+        <div class="box" id="org-side">
+            <div id="orgcontent">
+                <h2>About {{org.organization}}</h2>
+                {% edit_widget content %}
+                <div class="expandable" data-content="org_content">{{ org_content|default:"Your Content Goes Here"|escape|urlize|linebreaks|safe}}</div>
+            </div>
+            {% if org.expertise %}
+            <h2>Areas of Expertise</h2>
+            <p class="mrg-btm">{{ org.expertise }}</p>
+            {% endif %}
+            {% if can_edit %}
+            <div class="alert alert-info">To <a href="{% url profiles_edit_profile %}">edit</a> the area of expertise, please go to edit your organization's profile page.</div>
+            {% endif %}
+            <div id="orglinks" class="mrg-btm">
+                {% if can_edit %}<a href="{% url org_links org.slug %}" class='btn btn-small pull-right' target="_">Edit</a>{% endif %}
+                <h2>Links</h3>
+                <ul data-content="org_links">
+                    {% for l in org_links %}
+                    <li id="org-link-{{ l.pk }}">{% render_link l %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="orgresources" class="mrg-btm">
+                {% if can_edit %}<a href="{% url org_ribbon_links org.slug %}" class='btn btn-small pull-right' target="_">Edit</a>{% endif %}
+                <h2>Resources</h3>
+                <ul data-content="org_ribbon_links">
+                    {% for l in org.ribbon_links.all %}
+                    <li id="org-res-{{ l.pk }}">{% render_link l %}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 <div id="editpanel" style="display:none;">
     <div id="editpanel-content">
         <div id="edit_banner_image">
@@ -115,7 +140,8 @@
         </div>
         <div id="edit_org_content">
             <label>The content : </label>
-            <textarea style="width:600px;height:200px;resize:both">{{ org_content|default:""}}</textarea>
+            <div class="alert alert-info">On your organization page, only the first paragraph will be shown to visitors.  If you have more than one paragraph, visitors can click a link to view the rest.</div>
+            <textarea style="width:263px;height:201px;resize:both">{{ org_content|default:""}}</textarea>
         </div>
         <div id="edit_org_links">
             {% for l in org.ordered_links %}

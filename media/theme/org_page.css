@@ -1,20 +1,17 @@
 .edit-btn {
     float: right;
 }
-.article-list ul {
-
-}
 .article-list ul li {
     display: inline;
     float: left;
-    margin: 10px 28px;
+    margin: 10px;
     background: white;
-    width: 256px;
-    height: 200px;
+    width: 182px;
+    height: 150px;
 }
 .tile a img {
-    height: 128px;
-    width: 256px;
+    width: 182px;
+    height: 91px;
 }
 .avatar img {
     width: auto !important;
@@ -22,9 +19,6 @@
 }
 .blurb {
     float:right;
-}
-#orglinks {
-    min-height: 20em;
 }
 #orgcontent {
     min-height: 20em;
@@ -62,6 +56,17 @@
     border: none;
     width: 256px;
     text-align: center;
+}
+#org-banner h3 {
+    display: inline;
+    font-size: 32px;
+    font-weight: bold;
+}
+#org-banner img {
+    vertical-align: middle;
+}
+#org-side h2 {
+    margin-bottom: 0;
 }
 #quicksearch-div {
     position: relative;

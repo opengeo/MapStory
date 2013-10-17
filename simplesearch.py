@@ -37,7 +37,9 @@ def owner_query(query, kw):
     q = ContactDetail.objects.select_related().filter(user__isnull=False)
     # not super users cannot see incomplete profiles
     if not superuser:
-        q = q.exclude(user__id__in=ProfileIncomplete.objects.all().values('user'))
+        user = kw['user']
+        incomplete = ProfileIncomplete.objects.exclude(user__username=user.username).values('user')
+        q = q.exclude(user__id__in=incomplete)
     # don't fetch these, they won't be used
     q = q.defer('blurb', 'biography')
     return q
