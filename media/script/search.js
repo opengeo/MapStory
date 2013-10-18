@@ -246,7 +246,10 @@ Ext.onReady(function() {
 
     if (init_search) {
         if ('bytype' in init_search) {
-            Ext.get('bytype').parent('.refineSection').setVisibilityMode(Ext.Element.DISPLAY).hide();
+            ( init_search['bytype'] == 'owner' ?
+              Ext.get('bytype').select('a:not([@data-subtype])') :
+              Ext.get('bytype').parent('.refineSection')
+            ).setVisibilityMode(Ext.Element.DISPLAY).hide();
         }
         queryItems = init_search;
         if (init_search.q) {
@@ -451,7 +454,7 @@ Ext.onReady(function() {
         }
     });
     
-    function updateAciveFilterHeader() {
+    function updateActiveFilterHeader() {
         if (Ext.get("refineSummary").select('div').getCount()) {
             Ext.select("#refineSummary h5").show();
         } else {
@@ -459,26 +462,31 @@ Ext.onReady(function() {
         }
     }
 
-    function addActiveFilter(typename,querykey,value,queryValue,multiple,callback) {
+    function addActiveFilter(typename,querykey,value,queryValue,multiple,callback,subtype) {
         var el = filterTemplate.append("refineSummary",{typeclass:typename.replace(' ','_'),type:typename,value:value},true);
-        el.on('click',function(ev) {
-           ev.preventDefault();
-           el.remove();
-           if (multiple) {
-               queryItems[querykey].remove(queryValue);
-               if (queryItems[querykey].length == 0) {
-                   delete queryItems[querykey];
-               }
-           } else {
-               delete queryItems[querykey];
-           }
-           reset();
-           updateAciveFilterHeader();
-           if (typeof callback != 'undefined') {
-               callback();
-           }
+        el.on('click', function(ev) {
+            ev.preventDefault();
+            el.remove();
+            if (!(querykey in init_search)) {
+                if (multiple) {
+                    queryItems[querykey].remove(queryValue);
+                    if (queryItems[querykey].length == 0) {
+                        delete queryItems[querykey];
+                    }
+                } else {
+                    delete queryItems[querykey];
+                }
+            }
+            if (typeof subtype != 'undefined') {
+                delete queryItems['subtype'];
+            }
+            reset();
+            updateActiveFilterHeader();
+            if (typeof callback == 'function') {
+                callback();
+            }
         });
-        updateAciveFilterHeader();
+        updateActiveFilterHeader();
     }
 
     function enableSearchLink(selector,querykey,multiple) {
@@ -486,6 +494,7 @@ Ext.onReady(function() {
             ev.preventDefault();
             var anchor = Ext.get(this),
                 href =  anchor.getAttribute('href'),
+                subType = null,
                 filterType,
                 existing;
             if (href[0] == '#') {
@@ -493,6 +502,11 @@ Ext.onReady(function() {
             } else {
                 // IE...
                 href = href.substring(href.indexOf("#") + 1);
+            }
+            // hack
+            if (anchor.getAttribute('data-subtype')) {
+                subType = anchor.getAttribute('data-subtype');
+                queryItems.subtype = subType;
             }
             if (multiple) {
                 existing = queryItems[querykey] || [];
@@ -505,7 +519,7 @@ Ext.onReady(function() {
             if (!multiple) {
                 Ext.select('#refineSummary .' + filterType.replace(' ','_')).remove();
             }
-            addActiveFilter(filterType, querykey, anchor.dom.innerHTML, href, multiple);
+            addActiveFilter(filterType, querykey, anchor.dom.innerHTML, href, multiple, null, subType);
             reset();
         });
     }
