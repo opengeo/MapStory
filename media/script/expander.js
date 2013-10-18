@@ -1,9 +1,11 @@
 $(document).ready(function() {
     var expandable = $('div.expandable'),
         html = expandable.html(),
-        slice = 600,
+        slice = 100,
         first = html.indexOf('</p>');
-    slice = first > 0 ? first : slice;
+    if (expandable.find('p').length > 1) {
+        slice = first > 0 ? first : slice;
+    }
     expandable.remove('br').expander({
         slicePoint: slice, // default is 100
         expandPrefix: ' ', // default is '... '
