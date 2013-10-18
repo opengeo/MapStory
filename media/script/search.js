@@ -93,9 +93,9 @@ Ext.onReady(function() {
         store.add(read.records);
         updateDisplaying();
         mapLink = Ext.get('view-map').dom.cloneNode(true);
-        mapLink.id = null;
+        mapLink.removeAttribute('id');
         layerLink = Ext.get('view-layer').dom.cloneNode(true);
-        layerLink.id = null;
+        layerLink.removeAttribute('id');
         Ext.each(results.rows,function(r,i) {
             var item, more;
             if (r.thumb == null) {
@@ -172,6 +172,7 @@ Ext.onReady(function() {
                 }
             });
         }
+        newTile.select('.viewer-link').remove();
         newTile.show().frame();
     }
     
