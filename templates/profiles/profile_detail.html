@@ -1,5 +1,6 @@
 {% extends "geonode/templates/profiles/profile_detail.html" %}
 {% load mapstory_tags %}
+{% load staticfiles %}
 
 {% block profile_messages %}
 {% profile_incomplete user %}
@@ -13,10 +14,12 @@
 
 {% block settings %}
 {% user_activity_email_prefs user %}
+{% favorites %}
 {% endblock %}
 
 {% block extra_body %}
 {{block.super}}
+<script type="text/javascript" src="{% static 'script/favorites.js'%}"></script>
 <script type="text/javascript">
 $(function() {
     $("#emailprefs .btn").click(function() {

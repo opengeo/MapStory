@@ -50,11 +50,6 @@
             <form id="searchForm">
                 <input id="searchField" name="search">
             </form>
-            {% if user.is_authenticated %}
-            <div id="favorites">
-                {% favorites %}
-            </div>
-            {% endif %}
         </div>
             
         <div class="box">
@@ -154,6 +149,12 @@
         </div>
             
         </div>
+
+        {% if user.is_authenticated %}
+        <div id="favorites" class="mrg-btm">
+            {% favorites %}
+        </div>
+        {% endif %}
     </div>
         
         

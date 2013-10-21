@@ -25,13 +25,13 @@
     width: 219px;
     height: 110px;
     cursor: pointer;
-    border: 1px solid none;
+    border: 1px solid transparent;
 }
 #search_results .thumb.owner {
     width: 80px;
     height: 80px;
     cursor: pointer;
-    border: 1px solid none;
+    border: 1px solid transparent;
 }
 #search_results .thumb selected {
     border: 1px solid #454238;
@@ -105,10 +105,8 @@
     background: url("/static/theme/img/icons/search.png") no-repeat scroll 194px center #FFFFFF;
 }
 #favorites {
-    border: 2px solid #8E9184;
     background: white;
     padding: 5px;
-    margin-top: 10px;
 }
 #favorites ul {
     padding: 0;
