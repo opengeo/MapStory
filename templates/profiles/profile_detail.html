@@ -18,10 +18,12 @@
 {% block extra_body %}
 {{block.super}}
 <script type="text/javascript">
+$(function() {
     $("#emailprefs .btn").click(function() {
         $.post($(this).closest('#emailprefs').data('url'),{
             notification_preference : $(this).data('code')
         });
     });
+});
 </script>
 {% endblock %}
