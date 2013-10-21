@@ -3,14 +3,7 @@
 {% block content %} 
 <div id="main" class="messages">
 <h1>{% trans "Messages" %}</h1>
-    <div id="sidebar" class="messages">
-        <ul class="subnavilist">
-            <li><a class="btn btn-danger" href="{% url messages_compose %} ">{% trans "New Message" %}</a></li>
-            <li><a href="{% url messages_inbox %} ">{% trans "Inbox" %}</a></li>
-            <li><a href="{% url messages_outbox %} ">{% trans "Sent Messages" %}</a></li>
-            <li><b>{% trans "Trash" %}</b></li>
-        </ul>
-    </div>
+    {% include "django_messages/_sidebar.html" %}
     <div id="container">
         <h2>Sent Messages</h2>
         {% if message_list %} 
