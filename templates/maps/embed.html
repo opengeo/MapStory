@@ -1,4 +1,5 @@
 {% extends "fullscreen.html" %}
+{% load staticfiles %}
 {% load i18n %}
 {% block title %} {% trans "Map Viewer" %} - {{ block.super }} {% endblock %}
 
@@ -19,6 +20,7 @@
 {% include "geonode/ext_header.html" %}
 {% include "geonode/app_header.html" %}
 {% include "geonode/geo_header.html" %}
+<link rel="stylesheet" type="text/css" href="{% static "theme/access-theme-shim.css"%}" />
 
 <script type="text/javascript">
 var app;
