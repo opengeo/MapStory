@@ -20,6 +20,7 @@ $(function() {
                 },
                 success: function(resp) {
                     currentContent.html(resp);
+                    mapstoryExpandable(); // redo expandable
                 }
             }
         };
@@ -28,11 +29,6 @@ $(function() {
         var action = el.attr('data-content'),
             parent = el.parent(),
             position = parent.offset();
-    console.log(parent);
-    console.log(parent.position());
-    console.log(parent.offset());
-    console.log(parent.outerWidth());
-    console.log(parent.outerHeight());
         currentContent = el;
         widget.children('div').hide();
         currentWidget = $("#edit_" + action).show();

@@ -20,14 +20,15 @@
 .blurb {
     float:right;
 }
-#orgcontent {
-    min-height: 20em;
-}
 #mediabanner {
     min-height: 10em;
 }
 #orgcontent p {
     margin-bottom: 1em;
+}
+#orgcontent .details .read-less {
+    position: relative;
+    top: -10px;
 }
 .nav-tabs a {
     font-size: medium;

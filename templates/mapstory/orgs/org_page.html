@@ -20,7 +20,7 @@
     </div>
     <div class="span4" style="float:right; margin-top:10px;">
         <div class="box" id="org-side">
-            <div id="orgcontent">
+            <div id="orgcontent" class="mrg-btm">
                 <h2>About {{org.organization}}</h2>
                 {% edit_widget content %}
                 <div class="expandable" data-content="org_content">{{ org_content|default:"Your Content Goes Here"|escape|urlize|linebreaks|safe}}</div>
@@ -74,6 +74,9 @@
                 <li><a href="#4" data-toggle="tab">STORYLAYERS USED BY</a></li>
                 {% endif %}
             </ul>
+            {% if not favs.map and not favs.layer and not favs.user and not using %}
+            <p>This organization has not added any MapStories or StoryLayers to this page yet.</p>
+            {% else %}
             <div class="tab-content box">
                 {% if favs.map %}
                 <div class="tab-pane active" id="1">
@@ -120,6 +123,7 @@
                 </div>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
