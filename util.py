@@ -131,7 +131,7 @@ def lazy_context(f):
 class WarperMiddleware(object):
 
     def process_response(self, req, resp):
-        if not req.COOKIES.get('msid', None) and req.user.is_authenticated():
+        if not req.COOKIES.get('msid', None) and hasattr(req, 'user') and req.user.is_authenticated():
             key = getattr(settings, 'WARPER_KEY', 'abc123')
             digested = hmac.new(key, req.user.username, hashlib.sha1).hexdigest()
             cookie = '%s:%s' % (req.user.username, digested)
