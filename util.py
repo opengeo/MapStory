@@ -9,6 +9,8 @@ from django.utils.safestring import mark_safe
 import codecs
 import csv
 from cStringIO import StringIO
+import hashlib
+import hmac
 import hotshot
 import os
 import time
@@ -124,6 +126,18 @@ def lazy_context(f):
         return lazy_type()
 
     return _inner
+
+
+class WarperMiddleware(object):
+
+    def process_response(self, req, resp):
+        if not req.COOKIES.get('msid', None) and req.user.is_authenticated():
+            key = getattr(settings, 'WARPER_KEY', 'abc123')
+            digested = hmac.new(key, req.user.username, hashlib.sha1).hexdigest()
+            cookie = '%s:%s' % (req.user.username, digested)
+            expires = datetime.datetime.now() +  datetime.timedelta(days=30)
+            resp.set_cookie('msid', cookie, domain=settings.SESSION_COOKIE_DOMAIN, expires=expires)
+        return resp
 
 
 # thanks ned batchelder

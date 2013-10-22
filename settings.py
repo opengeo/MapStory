@@ -116,6 +116,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'mapstory.util.WarperMiddleware'
 )
 
 # This isn't required for running the geonode site, but it when running sites that inherit the geonode.settings module.
