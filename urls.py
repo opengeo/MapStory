@@ -15,6 +15,7 @@ from account.views import ConfirmEmailView
 from account.views import LoginView
 from account.views import LogoutView
 
+import datetime
 import hmac
 import hashlib
 
@@ -40,32 +41,10 @@ sitemaps = {
 }
 
 
-# hack login/logout to set cookies for the warper
-# this will only work if the site is running on mapstory.org
-class WarperCookieLogin(LoginView):
-    def post(self, *args, **kwargs):
-        super(WarperCookieLogin, self).post(*args, **kwargs)
-        if self.request.user.is_authenticated():
-            return HttpResponse(status=200)
-        return HttpResponse(
-                    content="invalid login",
-                    status=400,
-                    mimetype="text/plain"
-                )
-
-    def form_valid(self, form):
-        resp = super(WarperCookieLogin, self).form_valid(form)
-        key = getattr(settings, 'WARPER_KEY', 'abc123')
-        digested = hmac.new(key, form.user.username, hashlib.sha1).hexdigest()
-        cookie = '%s:%s' % (form.user.username, digested)
-        resp.set_cookie('msid', cookie, domain='warper.mapstory.org', httponly=True)
-        return resp
-
-
 class WarperCookieLogout(LogoutView):
     def post(self, *args, **kwargs):
         resp = super(WarperCookieLogout, self).post(self, *args, **kwargs)
-        resp.delete_cookie('msid', domain='warper.mapstory.org')
+        resp.delete_cookie('msid', domain=settings.SESSION_COOKIE_DOMAIN)
         return resp
 
 
@@ -106,7 +85,7 @@ urlpatterns += patterns('mapstory.views',
 
     # ugh, overrides
     # for the account views - we are only using these
-    url(r"^accounts/ajax_login", WarperCookieLogin.as_view(), name="account_login"),
+    url(r"^accounts/ajax_login", LoginView.as_view(), name="account_login"),
     url(r"^accounts/logout", WarperCookieLogout.as_view(), name="account_logout"),
     url(r"^account/confirm_email/(?P<key>\w+)/$", ConfirmEmailView.as_view(), name="account_confirm_email"),
     url(r"^account/signup/$", SignupView.as_view(), name="account_signup"),
