@@ -1,21 +1,18 @@
-{% extends "django_messages/base.html" %} 
-{% load i18n %} 
-{% block content %}
-<div id="main" class="messages">
-    <h1>{% trans "Messages" %}</h1>
-    {% include "django_messages/_sidebar.html" %}
-    <div id="container" class="message">
-        <h2>{{ message.subject }}</h2>
-        <div id="info"><a href="{{message.sender.get_absolute_url}}">{{ message.sender }}</a><span id="date">{{ message.sent_at|date:_("DATETIME_FORMAT")}}</span></div>
-        {{ message.body|escape|urlize|linebreaks|safe }}
-        <hr/>
+{% extends "django_messages/base.html" %}
+{% load i18n %}
 
-        <div class="mrg-top">
-            {% ifequal message.recipient.pk user.pk %}
-            <a class="message-primary-action" href="{% url messages_reply message.id %}">{% trans "Reply" %}</a>
-            {% endifequal %}
-            <a class="message-action" href="{% url messages_delete message.id %}"><i class="icon-trash"></i> {% trans "Delete" %}</a>
-        </div>
-    </div>
+{% block message_content %}
+<h2>{% block message_title %}{{ message.subject }}{% endblock %}</h2>
+<div class="message">
+<div id="info"><a href="{{message.sender.get_absolute_url}}">{{ message.sender }}</a><span id="date">{{ message.sent_at|date:_("DATETIME_FORMAT")}}</span></div>
+{{ message.body|escape|urlize|linebreaks|safe }}
+<hr/>
+</div>
+
+<div>
+    {% ifequal message.recipient.pk user.pk %}
+    <a class="message-action primary" href="{% url messages_reply message.id %}">{% trans "Reply" %}</a>
+    {% endifequal %}
+    <a class="message-action" href="{% url messages_delete message.id %}"><i class="icon-trash"></i> {% trans "Delete" %}</a>
 </div>
 {% endblock %}

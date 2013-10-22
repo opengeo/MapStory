@@ -1,9 +1,33 @@
 {% extends "base.html" %}
-{% load i18n %}  
-{% load staticfiles %}  
+{% load i18n %}
+{% load staticfiles %}
+
+{% block title %}Messages - {% block message_title %}{% endblock %}{% endblock %}
+
 {% block extra_style %}
     <link href="{% static "theme/messages.css" %}" rel="stylesheet">
 {% endblock %}
-{% block bodyclass %}messages{% endblock %}
-{% block content %}  
+
+{% block content %}
+<div class="row">
+    <div class="span12">
+    <h1>Messages</h1>
+    </div>
+</div>
+<div id="message-content" class="row mrg-btm">
+    <div class="span3">
+        {% include "django_messages/_sidebar.html" %}
+    </div>
+    <div class="span9">
+        <div id="message-main" class="box">
+        {% block message_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script type="text/javascript">
+resizeMain('#message-content');
+</script>
 {% endblock %}

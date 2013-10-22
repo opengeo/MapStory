@@ -1,39 +1,23 @@
-.messages#main h1 {
+#main h1 {
     font-size: 25px;
     margin: 10px 0 20px 0;
     color: #F46817;
 }
 
-.messages#main h2 {
+#main h2 {
     color: #333;
 }
 
-#sidebar {
-    float:left;
-    width: 200px;
-    padding: 20px;
-    margin: 0 20px 20px 0;
-    background: white;
-}
-
-#container {
-    float:left;
-    width: 678px;
-    padding: 20px;
-    margin-bottom: 20px;
-    background: white;
-}
-
-#container strong {
+#message-content strong {
     font-weight: bold;
 }
 
-#container th {
+#message-content th {
     font-weight: bold;
     color: #666;
 }
 
-#container .messages td {
+#message-content .messages td {
     padding: 10px 15px 10px 0;
     font-size: 13px;
 }
@@ -41,48 +25,52 @@
 #info {
     margin-bottom:15px;
 }
+
 #info #date {
     float:right;
 }
 
-#container table {
+#message-content table {
     width: 100%;
 }
 
-#container textarea {
+#message-content textarea {
     width: 596px;
 }
 
-#container input {
+#message-content input {
     width: 604px;
 }
 
-#container .twitter-typeahead {
+#message-content .twitter-typeahead {
     width: 100%;
 }
 
-#container tbody tr {
+#message-content tbody tr {
     border-top: 1px solid #4a4a4a;
 }
 
-#container tbody tr a {
+#message-content tbody tr a {
     font-weight: inherit;
 }
 
-#container form tr {
+#message-content form tr {
     border-top: 0;
 }
 
-#container.message {
+#message-content .message {
     font-size:14px;
     line-height:18px;
 }
 
-#container.message p {
+#message-content .message p {
     margin-bottom: 10px;
 }
 
 .message-action {
+    margin-right: .5em;
+    line-height: 16px;
+    display: inline-block;
     background: none repeat scroll 0 0 #aaa;
     border-radius: 5px 5px 5px 5px;
     color: #000;
@@ -96,19 +84,14 @@
     vertical-align: sub;
 }
 
-.message-primary-action {
-    background: none repeat scroll 0 0 #9E2F1E;
-    border-radius: 5px 5px 5px 5px;
+.message-action.primary {
+    background-color: #9E2F1E;
     color: #fff;
-    font-size: 16px;
-    padding: 8px;
-    font-family: 'Marvel',sans-serif;
-    width: auto !important;
 }
 
 .subnavilist li {
     font-size: 14px;
-    margin: 5px 0;
+    padding: 5px 0;
 }
 
 .subnavilist li.current a {

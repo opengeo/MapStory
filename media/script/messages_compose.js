@@ -2,9 +2,9 @@ $(function() {
     var authors = "/search/api/authors",
         t = $('#id_recipient').typeahead(),
         ti = t.data('typeahead'),
-        lookup = ti.lookup,
-        user;
+        lookup = ti.lookup;
     t.attr('autocomplete','off');
+
     // patch in ajax lookup and allow for callback func
     ti.lookup = function(func) {
         var q = this.$element.val();
@@ -28,16 +28,21 @@ $(function() {
         }
     };
     $('#message-form').submit(function(ev) {
-        // before submitting, extract username
-        var username = /\[ (.*) \]/.exec(ti.$element.val())[1];
-        $('#id_recipient').val(username);
+        // before submitting, extract username. 
+        // if not present in autocomplete form, fall through
+        var username = /\[ (.*) \]/.exec(ti.$element.val());
+        if (username) {
+            $('#id_recipient').val(username[1]);
+        }
     });
     $('#message-form input[type=submit]').addClass('btn');
     t.attr('placeholder', 'Enter name or username');
     $('#id_subject').attr('placeholder', 'Enter subject');
     $('#id_body').attr('placeholder', 'Enter message');
-    user = /to=(.*)/.exec(window.location.search)[1];
-    if (user) {
+    // if any username value, unpack it
+    if (t.val()) {
+        // it will be in django model rep format
+        user = /: (\S+)>/.exec(t.val())[1];
         t.val(user);
         // select on callback from ajax
         ti.lookup(function() { ti.select(); });
