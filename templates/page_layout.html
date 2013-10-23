@@ -67,8 +67,7 @@
                 </div>
             {% endif %}
             <div id="quicksearch-div">
-            <form id="quicksearch" action="{% url new_search %}" method="POST">
-            {% csrf_token %}
+            <form id="quicksearch" action="{% url new_search %}" method="GET">
             <label for="q">Quick Search</label>
             <input name="q" value="" autocomplete="off"/>
             </form>
