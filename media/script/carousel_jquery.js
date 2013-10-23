@@ -11,6 +11,9 @@
 
         if (tiles.length <= 3) {
             carousel.children('.arrow').hide();
+            for (var i = 0; i < tiles.length; i++ ) {
+                tiles.eq([ tile(i) ]).css('left', positions[i]);
+            }
             return;
         }
         function tile(off) {
