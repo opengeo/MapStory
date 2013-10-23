@@ -41,6 +41,19 @@ sitemaps = {
 }
 
 
+class AjaxLogin(LoginView):
+    '''account login doesn't respond with 400 for invalid login'''
+    def post(self, *args, **kwargs):
+        super(AjaxLogin, self).post(*args, **kwargs)
+        if self.request.user.is_authenticated():
+            return HttpResponse(status=200)
+        return HttpResponse(
+                    content="invalid login",
+                    status=400,
+                    mimetype="text/plain"
+                )
+
+
 class WarperCookieLogout(LogoutView):
     def post(self, *args, **kwargs):
         resp = super(WarperCookieLogout, self).post(self, *args, **kwargs)
@@ -89,7 +102,7 @@ urlpatterns += patterns('mapstory.views',
 
     # ugh, overrides
     # for the account views - we are only using these
-    url(r"^accounts/ajax_login", LoginView.as_view(), name="account_login"),
+    url(r"^accounts/ajax_login", AjaxLogin.as_view(), name="account_login"),
     url(r"^accounts/logout", WarperCookieLogout.as_view(), name="account_logout"),
     url(r"^account/confirm_email/(?P<key>\w+)/$", ConfirmEmailView.as_view(), name="account_confirm_email"),
     url(r"^account/signup/$", SignupView.as_view(), name="account_signup"),
