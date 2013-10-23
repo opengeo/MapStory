@@ -46,11 +46,14 @@ def owner_query(query, kw):
         # don't fetch these, they won't be used
         # causes error when using on Org...
         q = q.defer('blurb', 'biography')
-    # not super users cannot see incomplete profiles
+    # super users can see incomplete profiles
     if not superuser:
         user = kw['user']
-        incomplete = ProfileIncomplete.objects.exclude(user__username=user.username).values('user')
-        q = q.exclude(user__id__in=incomplete)
+        incomplete = ProfileIncomplete.objects.all()
+        if user:
+            # if the user is searching, show their profile even if incomplete
+            incomplete = incomplete.exclude(user__username=user.username)
+        q = q.exclude(user__id__in=incomplete.values('user'))
 
     return q
 
