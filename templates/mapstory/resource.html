@@ -3,6 +3,22 @@
 {% load mapstory_tags %}
 {% load staticfiles %}
 
+{% block extra_style %}
+<style type="text/css">
+#carousel {
+    height: 200px;
+}
+#carousel .tile {
+    height: auto;
+    margin-top: 0;
+    padding: 0;
+    border: none;
+    width: 256px;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
 {% block title %}Resources for {{resource.name}}{% endblock %}
 
 {% block main %}
