@@ -1,5 +1,6 @@
 {% extends "geonode/templates/profiles/profile_detail.html" %}
 {% load mapstory_tags %}
+{% load staticfiles %}
 
 {% block profile_messages %}
 {% profile_incomplete user %}
@@ -9,19 +10,24 @@
 <li><a href="{% url invites_page %}">Invitations</a></li>
 <li><a href="{% url user_links %}">Links</a></li>
 <li><a href="{% url user_ribbon_links %}">Media</a></li>
+<li><a href="{% url messages_inbox %}">Message Inbox</a></li>
 {% endblock %}
 
 {% block settings %}
 {% user_activity_email_prefs user %}
+{% favorites %}
 {% endblock %}
 
 {% block extra_body %}
 {{block.super}}
+<script type="text/javascript" src="{% static 'script/favorites.js'%}"></script>
 <script type="text/javascript">
+$(function() {
     $("#emailprefs .btn").click(function() {
         $.post($(this).closest('#emailprefs').data('url'),{
             notification_preference : $(this).data('code')
         });
     });
+});
 </script>
 {% endblock %}

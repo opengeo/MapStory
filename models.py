@@ -203,9 +203,10 @@ class Section(models.Model):
 
 
 class Link(models.Model):
-    name = models.CharField(max_length=64)
-    href = models.URLField(max_length=256)
-    order = models.IntegerField(default=0, blank=True, null=True)
+    name = models.CharField(max_length=64, help_text="The link text")
+    href = models.URLField(max_length=256, help_text="Limited to 256 characters")
+    order = models.IntegerField(default=0, blank=True, null=True,
+                                help_text="Ordering in the list, lowest # first")
 
     def is_image(self):
         ext = os.path.splitext(self.href)[1][1:].lower()
@@ -328,7 +329,7 @@ class ContactDetail(Contact):
         incomplete = []
         if not self._has_avatar():
             incomplete.append('Picture/Avatar')
-        if not all([self.user.first_name, self.user.last_name]):
+        if not hasattr(self, 'org') and not all([self.user.first_name, self.user.last_name]):
             incomplete.append('Full Name (First and Last)')
         if not self.blurb:
             incomplete.append('Blurb')
@@ -423,7 +424,8 @@ class Org(ContactDetail):
 
     def __unicode__(self):
         return u"Org %s (%s)" % (self.user, self.organization)
-    
+
+
 class OrgContent(models.Model):
     name = models.CharField(max_length=32)
     text = models.TextField(null=True, blank=True)

@@ -109,6 +109,14 @@ $(function () {
     });
 });
 
+function resizeMain(el) {
+    if (typeof el == 'undefined') {
+        el = '#main';
+    }
+    el = $(el);
+    el.css('minHeight', $(document).height() - $('body').outerHeight() + el.height());
+}
+
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {

@@ -557,25 +557,25 @@ class LinkTest(TestCase):
 
     def test_tags(self):
         url = mapstory_tags.ext_url('wiki', 'curation_guide_ratings')
-        self.assertEqual("http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings", url)
+        self.assertEqual("http://wiki.mapstory.org/wiki/Curation_Guide#Ratings", url)
         link = mapstory_tags.ext_link('wiki', 'curation_guide_ratings')
-        self.assertEqual('<a href="http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings"></a>',
+        self.assertEqual('<a href="http://wiki.mapstory.org/wiki/Curation_Guide#Ratings"></a>',
             link)
         link = mapstory_tags.ext_link('wiki', 'curation_guide_ratings',
             classes='blah')
-        self.assertEqual('<a href="http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings" class="blah"></a>', link)
+        self.assertEqual('<a href="http://wiki.mapstory.org/wiki/Curation_Guide#Ratings" class="blah"></a>', link)
         link = mapstory_tags.wiki_link('curation_guide_ratings',
             classes='blah')
-        self.assertEqual('<a href="http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings" class="blah" target="_blank"></a>', link)
+        self.assertEqual('<a href="http://wiki.mapstory.org/wiki/Curation_Guide#Ratings" class="blah" target="_blank"></a>', link)
         link = mapstory_tags.wiki_help_link('curation_guide_ratings',
             classes='blah')
-        self.assertEqual('<a href="http://wiki.mapstory.org/index.php?title=Curation_Guide#Ratings" class="icon-question-sign icon-orange blah" title="Learn More" target="_blank"></a>', link)
+        self.assertEqual('<a href="http://wiki.mapstory.org/wiki/Curation_Guide#Ratings" class="icon-question-sign icon-orange blah" title="Learn More" target="_blank"></a>', link)
 
     def test_verify_links(self):
         from mapstory.links import links
         passed, failed = self._verify_links(links)
         if failed:
-            self.fail('\n'.join(failed))
+            self.fail('\n'.join(map(str,failed)))
         # make sure we checked something
         self.assertTrue(len(passed) > 0)
 
@@ -585,7 +585,7 @@ class LinkTest(TestCase):
             "bunk" : {
                 "links" : {
                     'bad' : 'http://wiki.mapstory.org/blah',
-                    'missing_fragment' : "http://wiki.mapstory.org/index.php?title=Curation_Guide#MISSING"
+                    'missing_fragment' : "http://wiki.mapstory.org/wiki/Curation_Guide#MISSING"
                 }
             }
         }
@@ -593,7 +593,7 @@ class LinkTest(TestCase):
         self.assertTrue(len(passed), 0)
         expected = [
             ('bad', 'http://wiki.mapstory.org/blah', 'invalid response: 404'),
-            ('missing_fragment', 'http://wiki.mapstory.org/index.php?title=Curation_Guide#MISSING', 'could not locate fragment: MISSING')
+            ('missing_fragment', 'http://wiki.mapstory.org/wiki/Curation_Guide#MISSING', 'could not locate fragment: MISSING')
         ]
         self.assertEqual(expected, failed)
 

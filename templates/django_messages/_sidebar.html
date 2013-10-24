@@ -1,0 +1,9 @@
+{% load i18n %} 
+<div id="sidebar" class="messages box">
+    <ul class="subnavilist">
+        <li><a class="message-action primary" href="{% url messages_compose %} ">{% trans "New Message" %}</a></li>
+        <li {% if 'inbox' in request.path %}class='current'{% endif %}><a href="{% url messages_inbox %}">{% trans "Inbox" %}</a></li>
+        <li {% if 'outbox' in request.path %}class='current'{% endif %}><a href="{% url messages_outbox %} ">{% trans "Sent Messages" %}</a></li>
+        <li {% if 'trash' in request.path %}class='current'{% endif %}><a href="{% url messages_trash %} ">{% trans "Trash" %}</a></li>
+    </ul>
+</div>

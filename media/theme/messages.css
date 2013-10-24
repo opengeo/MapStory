@@ -1,0 +1,99 @@
+#main h1 {
+    font-size: 25px;
+    margin: 10px 0 20px 0;
+    color: #F46817;
+}
+
+#main h2 {
+    color: #333;
+}
+
+#message-content strong {
+    font-weight: bold;
+}
+
+#message-content th {
+    font-weight: bold;
+    color: #666;
+}
+
+#message-content .messages td {
+    padding: 10px 15px 10px 0;
+    font-size: 13px;
+}
+
+#info {
+    margin-bottom:15px;
+}
+
+#info #date {
+    float:right;
+}
+
+#message-content table {
+    width: 100%;
+}
+
+#message-content textarea {
+    width: 596px;
+}
+
+#message-content input {
+    width: 604px;
+}
+
+#message-content .twitter-typeahead {
+    width: 100%;
+}
+
+#message-content tbody tr {
+    border-top: 1px solid #4a4a4a;
+}
+
+#message-content tbody tr a {
+    font-weight: inherit;
+}
+
+#message-content form tr {
+    border-top: 0;
+}
+
+#message-content .message {
+    font-size:14px;
+    line-height:18px;
+}
+
+#message-content .message p {
+    margin-bottom: 10px;
+}
+
+.message-action {
+    margin-right: .5em;
+    line-height: 16px;
+    display: inline-block;
+    background: none repeat scroll 0 0 #aaa;
+    border-radius: 5px 5px 5px 5px;
+    color: #000;
+    font-size: 16px;
+    padding: 8px;
+    font-family: 'Marvel',sans-serif;
+    width: auto !important;
+}
+
+.message-action i {
+    vertical-align: sub;
+}
+
+.message-action.primary {
+    background-color: #9E2F1E;
+    color: #fff;
+}
+
+.subnavilist li {
+    font-size: 14px;
+    padding: 5px 0;
+}
+
+.subnavilist li.current a {
+    color: #4A4A4A;
+}

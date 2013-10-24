@@ -6,6 +6,7 @@ import os.path
 import json
 import optparse # for 2.6 support
 import os
+import re
 import sys
 
 os.environ['DJANGO_SETTINGS_MODULE'] = "mapstory.settings"
@@ -16,6 +17,7 @@ from django.core import serializers
 from django.conf import settings
 from geonode.maps.models import MapLayer
 from geonode.maps.models import Map
+from geonode.maps.views import default_map_config
 
 
 class MigrationException(Exception):
@@ -153,6 +155,27 @@ class BaseLayerNameMigration(ConfigMigration):
         m.name = new_name
 
 
+class AddBaseLayersToExistingMaps(ConfigMigration):
+    'update base layers to existing maps'
+
+    def init(self):
+        self.query_set = MapLayer.objects.filter(group='background')
+        self.added = []
+
+    def run(self):
+        if not self.dry_run:
+            self.query_set.delete()
+        map_layers = []
+        _, templates = default_map_config(None)
+        for m in Map.objects.all():
+            for t in templates:
+                t.id = None
+                t.map = m
+                t.save()
+                map_layers.append(t.id)
+        print map_layers
+
+
 class RemoveMapProperties(ConfigMigration):
     'remove any gxp_mapproperties tools from stored map configuration'
 
@@ -190,6 +213,29 @@ class UseVirtualOWSURL(ConfigMigration):
             config['capability']['name'] = m.name
             print 'adjusted capability name and prefix to %s' % m.name
             m.layer_params = json.dumps(config)
+
+
+class ConvertLinksInMapAbstract(ConfigMigration):
+
+    query_set = Map.objects.exclude(abstract__isnull=True)
+    pat = re.compile('http(s?)://\S+')
+
+    def process_model(self, m):
+        print 'processing %s, map=%s' % (m.title, m.id)
+        def fun(m):
+            s = m.group()
+            return '"%s":%s' % (s,s)
+        if not m.abstract: return
+        if not self.pat.search(m.abstract):
+            if 'http' in m.abstract:
+                print 'POTENTIAL MISSED LINK!!!'
+            return
+        neu, cnt = self.pat.subn(fun, m.abstract)
+        if not cnt: return
+        print
+        print 'adjusting abstract in %s' % m.get_absolute_url()
+        print neu
+        m.abstract = neu
 
 
 def _migrations():

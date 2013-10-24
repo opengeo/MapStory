@@ -1,0 +1,16 @@
+{% load mapstory_tags %}
+{% if form|getthatattr:'parent' %}
+    <div id="comment_parent_text"></div>
+{% endif %}
+<form action="{{ form.action_url }}" method="post">{% csrf_token %}
+    <label for="id_comment">
+        {% if form.parent %}
+            Your Reply:
+        {% else %}
+            Comment:
+        {% endif %}
+    </label>
+    <textarea id="id_comment" rows="10" cols="40" name="comment"></textarea>
+    <input type="hidden" name="parent" id="id_parent" value="{{ form|getthatattr:'parent' }}" />
+    <input class="btn" type="submit" value="Submit" />
+</form>

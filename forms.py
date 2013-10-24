@@ -2,8 +2,9 @@ from django import forms
 from django.contrib.gis.geos import Point
 from account.forms import SignupForm
 from geonode.maps.models import Layer
-from mapstory.models import ContactDetail
 from mapstory.models import Annotation
+from mapstory.models import ContactDetail
+from mapstory.models import Link
 from mapstory.util import datetime_to_seconds
 from mapstory.util import parse_date_time
 import json
@@ -60,26 +61,31 @@ class ProfileForm(forms.ModelForm):
         for o in order:
             self.fields[o] = fields[o]
         self.fields.update(fields)
-        user = self.instance.user
-        # displaying the contents of user
-        self.initial['first_name'] = user.first_name
-        self.initial['last_name'] = user.last_name
+        if hasattr(self.instance, 'org'):
+            for f in ('first_name','last_name','position','biography','education'):
+                self.fields.pop(f)
+        else:
+            user = self.instance.user
+            # displaying the contents of user
+            self.initial['first_name'] = user.first_name
+            self.initial['last_name'] = user.last_name
         # display the user email if contact not set, change propogated on save
         if not self.initial['email']:
             self.initial['email'] = user.email
 
     def save(self, *args, **kw):
         data = self.cleaned_data
-        first_name = data['first_name']
-        last_name = data['last_name']
-        # make the contactdetail.name field match first_name,last_name
-        if all([first_name, last_name]):
-            self.instance.name = '%s %s' % (first_name, last_name)
-        super(ProfileForm, self).save(*args, **kw)
-        # now copy first and last name to user
         user = self.instance.user
-        user.first_name = first_name
-        user.last_name = last_name
+        if 'first_name' in data:
+            first_name = data['first_name']
+            last_name = data['last_name']
+            # make the contactdetail.name field match first_name,last_name
+            if all([first_name, last_name]):
+                self.instance.name = '%s %s' % (first_name, last_name)
+            # now copy first and last name to user
+            user.first_name = first_name
+            user.last_name = last_name
+        super(ProfileForm, self).save(*args, **kw)
         # and copy the email in - already saved to contact above
         user.email = data['email']
         user.save(*args, **kw)
@@ -164,3 +170,9 @@ class AnnotationForm(forms.ModelForm):
 
     class Meta:
         model = Annotation
+
+
+class LinkForm(forms.ModelForm):
+
+    class Meta:
+        model = Link

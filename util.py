@@ -190,7 +190,6 @@ def parse_date_time(val):
         try:
             return datetime.datetime.strptime(val, p)
         except ValueError:
-            print p, val
             pass
 
 

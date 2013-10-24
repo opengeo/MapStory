@@ -3,6 +3,7 @@ from mapstory.models import get_ratings
 from mapstory.models import Topic
 from mapstory.models import Section
 from mapstory.models import ContactDetail
+from mapstory.models import Org
 from mapstory.models import ProfileIncomplete
 
 from geonode.maps.models import Layer
@@ -33,13 +34,27 @@ owner_query_fields = ['blurb','organization','biography']
 def owner_query(query, kw):
     if kw['bysection']: return None
     superuser = kw['user'] and kw['user'].is_superuser
-    # make sure any 'bad' profiles get ignored
-    q = ContactDetail.objects.select_related().filter(user__isnull=False)
-    # not super users cannot see incomplete profiles
+    if 'org' == kw.get('subtype'):
+        # make sure any 'bad' profiles get ignored
+        q = Org.objects.select_related().filter(user__isnull=False)
+    else:
+        q = ContactDetail.objects.all().select_related()
+        if 'owner' == kw.get('subtype'):
+            q = q.filter(org__isnull=True)
+        # make sure any 'bad' profiles get ignored
+        q = q.filter(user__isnull=False)
+        # don't fetch these, they won't be used
+        # causes error when using on Org...
+        q = q.defer('blurb', 'biography')
+    # super users can see incomplete profiles
     if not superuser:
-        q = q.exclude(user__id__in=ProfileIncomplete.objects.all().values('user'))
-    # don't fetch these, they won't be used
-    q = q.defer('blurb', 'biography')
+        user = kw['user']
+        incomplete = ProfileIncomplete.objects.all()
+        if user:
+            # if the user is searching, show their profile even if incomplete
+            incomplete = incomplete.exclude(user__username=user.username)
+        q = q.exclude(user__id__in=incomplete.values('user'))
+
     return q
 
 def owner_rank_rules():

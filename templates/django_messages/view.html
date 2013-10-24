@@ -1,0 +1,18 @@
+{% extends "django_messages/base.html" %}
+{% load i18n %}
+
+{% block message_content %}
+<h2>{% block message_title %}{{ message.subject }}{% endblock %}</h2>
+<div class="message">
+<div id="info"><a href="{{message.sender.get_absolute_url}}">{{ message.sender }}</a><span id="date">{{ message.sent_at|date:_("DATETIME_FORMAT")}}</span></div>
+{{ message.body|escape|urlize|linebreaks|safe }}
+<hr/>
+</div>
+
+<div>
+    {% ifequal message.recipient.pk user.pk %}
+    <a class="message-action primary" href="{% url messages_reply message.id %}">{% trans "Reply" %}</a>
+    {% endifequal %}
+    <a class="message-action" href="{% url messages_delete message.id %}"><i class="icon-trash"></i> {% trans "Delete" %}</a>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 from django import template
-from django.template import loader
+from django.template import loader, Variable, VariableDoesNotExist
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Page
 from django.core.urlresolvers import reverse
@@ -503,6 +503,11 @@ def wiki_help_link(name, text='', title='Learn More', classes=''):
 def flag_widget(context, flag_object):
     return { 'flag_object': flag_object, 'request': context['request'] }
 
+
+@register.inclusion_tag('mapstory/_widget_message.html')
+def message_widget(user):
+    return { 'user' : user }
+
     
 @register.simple_tag
 def wiki_help_link(name, text='', title='Learn More', classes='', rel = ''):
@@ -519,3 +524,8 @@ else:
     @register.simple_tag
     def geonode_static(path):
         return staticfiles.static(geonode_static_prefix + path)
+
+
+@register.filter
+def getthatattr(object, attr):
+    return getattr(object,attr, None)

@@ -187,7 +187,20 @@ MAP_BASELAYERS = [
         "fixed": True,
         "group":"background"
     },
-
+    {
+        "source": {"ptype":"gx_olsource"},
+        "type":"OpenLayers.Layer.OSM",
+        "args":["Humanitarian OpenStreetMap", [
+            "http://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+            "http://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+            "http://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"
+          ], {"tileOptions": {"crossOriginKeyword": None}}
+        ],
+        'title': 'This is the title',
+        "visibility": True,
+        "fixed": True,
+        "group":"background"
+    },
     {
         "source": {"ptype":"gx_olsource"},
         "type":"OpenLayers.Layer.WMS",
@@ -216,7 +229,42 @@ MAP_BASELAYERS = [
         'group': 'background',
         'args': ['Satellite Imagery']
     },
-
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'natural-earth-1',
+        'title': 'Natural Earth',
+        'group': 'background'
+    },
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'natural-earth-2',
+        'title': 'Natural Earth 2',
+        'group': 'background'
+    },
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'geography-class',
+        'title': 'Geography Class',
+        'group': 'background'
+    },
+    {
+        'source': {
+            'ptype': 'gxp_mapboxsource',
+            'hidden': True
+        },
+        'name': 'world-light',
+        'title': 'World Light',
+        'group': 'background'
+    }
 ]
 
 # use new uploader
@@ -232,6 +280,7 @@ INSTALLED_APPS = (
     'django.contrib.webdesign',
     'django.contrib.staticfiles',
     'django.contrib.messages',
+    'django.contrib.markup',
     'django_extensions',
     'announcements',
     'flatblocks',
@@ -256,6 +305,7 @@ INSTALLED_APPS = (
     'actstream',
     'mailer',
     'oembed',
+    'django_messages',
 )
 
 def get_user_url(u):

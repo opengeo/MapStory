@@ -20,14 +20,15 @@ $(function() {
                 },
                 success: function(resp) {
                     currentContent.html(resp);
+                    mapstoryExpandable(); // redo expandable
                 }
             }
         };
 
     function startEdit(el) {
         var action = el.attr('data-content'),
-            parent = el.closest('.box'),
-            position = parent.position();
+            parent = el.parent(),
+            position = parent.offset();
         currentContent = el;
         widget.children('div').hide();
         currentWidget = $("#edit_" + action).show();

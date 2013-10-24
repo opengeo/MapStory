@@ -1257,6 +1257,20 @@ cite {
   position:relative;
 }
 
+#comment_modal .modal-header {
+    padding-bottom:0px;
+}
+
+#comment_modal .modal-body {
+    padding-top:5px;
+}
+
+#comment_parent_text {
+    font-style: italic;
+    padding: 5px 10px 15px 10px;
+    color: grey;
+}
+
 .pages {
   font-weight:bold;
   font-size:11px;
