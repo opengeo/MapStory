@@ -1,9 +1,0 @@
-{% load mapstory_tags %}
-{% load i18n %}
-<img class="thumbnail" style="float:right" src="{{ obj.get_thumbnail_url }}">
-<p>Generate a thumbnail that will represent this {{ obj.display_name }} when others search for it. To do so, first position your {{ obj.display_name }} above at the zoom level and time sequence you would like, then click "Generate thumbnail" below.</p>
-{% if not obj.get_thumbnail %}
-<p id="warn-missing-thumb" class="mrg-top alert alert-warning">This {{ obj.display_name }} has no thumbnail yet.</p>
-{% endif %}
-<a id="set_thumbnail" class="btn" href="#thumbnail">{% trans "Generate thumbnail" %}</a>
-<div class="clearfix"></div>

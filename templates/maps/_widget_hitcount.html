@@ -1,8 +1,0 @@
-{% load hitcount_tags %}
-{% load staticfiles %}
-<script type="text/javascript" src="{% static "script/map_hitcount.js" %}"></script>
-<script type="text/javascript">
-    installHitCount(function() {
-        {% get_hit_count_javascript for obj %}
-    });
-</script>
