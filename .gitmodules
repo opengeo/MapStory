@@ -1,18 +1,18 @@
 [submodule "geotools"]
-	path = geotools
-	url = git@github.com:ischneider/geotools.git
+	path= geotools
+	url= git://github.com/ischneider/geotools.git
 [submodule "geoserver"]
-	path = geoserver
-	url = git@github.com:geoserver/geoserver.git
+	path= geoserver
+	url= git://github.com/geoserver/geoserver.git
 [submodule "geonode"]
-	path = geonode
-	url = git@github.com:GeoNode/geonode.git
+	path= geonode
+	url= git://github.com/GeoNode/geonode.git
 [submodule "mapstory-geonode"]
-	path = mapstory-geonode
-	url = git@github.com:MapStory/mapstory-geonode.git
+	path= mapstory-geonode
+	url= git://github.com/MapStory/mapstory-geonode.git
 [submodule "MapLoom"]
-	path = MapLoom
-	url = git@github.com:MapStory/MapLoom.git
+	path= MapLoom
+	url= git://github.com/MapStory/MapLoom.git
 [submodule "geoserver-geonode-ext"]
-	path = geoserver-geonode-ext
-	url = git@github.com:MapStory/geoserver-geonode-ext.git
+	path= geoserver-geonode-ext
+	url= git://github.com/MapStory/geoserver-geonode-ext.git
