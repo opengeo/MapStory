@@ -4,6 +4,9 @@ from paver.easy import BuildFailure
 from paver.easy import pushd
 
 @task
+@cmdopts([
+    ('offline', 'o', 'run maven offline')
+])
 def build_geoserver(options):
     '''build geoserver-geonode-ext with extended time support'''
     GTMODULES=(
@@ -12,10 +15,12 @@ def build_geoserver(options):
         'modules/library/main',
         'modules/plugin/jdbc/jdbc-postgis'
     )
+    offline = '-o' if options.get('offline') else ''
     with pushd('geotools'):
-        sh('mvn -T 2C -DskipTests -pl %s clean install' % ','.join(GTMODULES))
+        modules = ','.join(GTMODULES)
+        sh('mvn %s -T 2C -DskipTests -pl %s clean install' % (offline, modules))
     with pushd('geoserver-geonode-ext'):
-        sh('mvn -DskipTests clean war:war')
+        sh('mvn %s -DskipTests clean war:war' % offline)
 
 
 @task
