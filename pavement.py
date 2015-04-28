@@ -33,5 +33,5 @@ def build_maploom(options):
         if options.get('init'):
             sh('bower install')
             sh('npm install')
-        sh('grunt copy')
+        sh('grunt django_maploom_build')
 
