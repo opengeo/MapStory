@@ -6,7 +6,7 @@
 	url= git://github.com/geoserver/geoserver.git
 [submodule "geonode"]
 	path= geonode
-	url= git://github.com/GeoNode/geonode.git
+	url= git://github.com/MapStory/geonode.git
 [submodule "mapstory-geonode"]
 	path= mapstory-geonode
 	url= git://github.com/MapStory/mapstory-geonode.git
